@@ -6,7 +6,6 @@ import 'core/theme/app_theme.dart';
 import 'data/db/database.dart';
 import 'providers/cart_provider.dart';
 import 'providers/session_provider.dart';
-import 'services/settings_service.dart';
 import 'ui/screens/auth/login_screen.dart';
 
 Future<void> main() async {
@@ -38,7 +37,6 @@ Future<void> main() async {
       const Duration(seconds: 10),
       onTimeout: () => throw Exception('Database init timed out'),
     );
-    await SettingsService.instance.load();
   } catch (e) {
     debugPrint('Startup error: $e');
   }
@@ -60,7 +58,11 @@ class SariBayApp extends StatelessWidget {
         title: 'SariBay POS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
-        home: const SplashScreen(),
+        initialRoute: '/',
+        routes: {
+          '/': (_) => const SplashScreen(),
+          '/login': (_) => const LoginScreen(),
+        },
       ),
     );
   }
@@ -92,9 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate to login after a short delay
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+        Navigator.of(context).pushReplacementNamed('/login');
       }
     });
   }
