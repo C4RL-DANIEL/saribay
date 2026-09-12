@@ -1,0 +1,16 @@
+/build/
+/.dart_tool/
+/.idea/
+*.iml
+.packages
+.pub-cache/
+.pub/
+pubspec.lock
+*.apk
+*.aab
+*.jks
+*.keystore
+android/.gradle/
+android/app/build/
+android/local.properties
+android/key.properties

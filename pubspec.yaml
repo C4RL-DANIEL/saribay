@@ -1,0 +1,75 @@
+name: saribay
+description: "Sari-Sari Store POS & Management - Production-ready store management for the Philippines."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ---- Data & offline-first ----
+  sqflite: ^2.4.0
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  shared_preferences: ^2.3.2
+  sqflite_common_ffi: ^2.3.3
+
+  # ---- State management ----
+  provider: ^6.1.2
+
+  # ---- Barcode scanning ----
+  mobile_scanner: ^5.2.3
+
+  # ---- Formatting & internationalization ----
+  intl: ^0.19.0
+
+  # ---- Security ----
+  flutter_secure_storage: ^9.2.2
+  crypto: ^3.0.5
+  local_auth: ^2.3.0
+
+  # ---- Charts & visualization ----
+  fl_chart: ^0.69.0
+
+  # ---- Receipts / PDF / printing ----
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # ---- QR payment codes ----
+  qr_flutter: ^4.1.0
+
+  # ---- Media / product & payment QR images ----
+  image_picker: ^1.1.2
+  file_picker: ^8.1.2
+
+  # ---- Sharing ----
+  share_plus: ^10.0.2
+
+  # ---- Import/Export CSV & Excel ----
+  csv: ^6.0.0
+  excel: ^4.0.6
+
+  # ---- Connectivity & sync ----
+  connectivity_plus: ^6.1.0
+
+  # ---- Local notifications ----
+  flutter_local_notifications: ^17.2.2
+
+  # ---- Utilities ----
+  uuid: ^4.5.0
+  collection: ^1.18.0
+  sprintf: ^7.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
