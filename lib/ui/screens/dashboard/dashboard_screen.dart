@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
 import '../sales/sales_history_screen.dart';
@@ -79,6 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
     }
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: RefreshIndicator(
@@ -86,8 +88,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text('Dashboard',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(l.dashboard,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(DateFormat('EEEE, MMM d, yyyy').format(DateTime.now()),
                 style: TextStyle(color: Colors.grey.shade600)),
@@ -96,20 +98,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Today's stats
             Row(
               children: [
-                _statCard(Icons.receipt_long, 'Today\'s Sales',
+                _statCard(Icons.receipt_long, l.todaysSales,
                     peso(_data['salesToday']), const Color(0xFF1B8A5A)),
                 const SizedBox(width: 12),
-                _statCard(Icons.trending_up, 'Profit',
+                _statCard(Icons.trending_up, l.profit,
                     peso(_data['profitToday']), Colors.blue),
               ],
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                _statCard(Icons.shopping_bag, 'Products',
+                _statCard(Icons.shopping_bag, l.products,
                     '${_data['totalProducts']}', Colors.purple),
                 const SizedBox(width: 12),
-                _statCard(Icons.receipt, 'Transactions',
+                _statCard(Icons.receipt, l.transactions,
                     '${_data['txToday']}', Colors.orange),
               ],
             ),
@@ -117,18 +119,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Alerts
             if ((_data['lowStock'] as int) > 0)
-              _alertCard(Icons.warning_amber, 'Low Stock',
+              _alertCard(Icons.warning_amber, l.lowStock,
                   '${_data['lowStock']} items need restocking', Colors.orange),
             if ((_data['utangCount'] as int) > 0)
-              _alertCard(Icons.person_off, 'Outstanding Utang',
+              _alertCard(Icons.person_off, l.outstandingUtang,
                   '${peso(_data['utangTotal'])} from ${_data['utangCount']} customers', Colors.deepOrange),
 
             const SizedBox(height: 20),
 
             // Best sellers
             if (_bestSellers.isNotEmpty) ...[
-              const Text('Best Sellers (7 days)',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l.bestSellers,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Card(
                 child: Column(
@@ -137,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final b = e.value;
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1B8A5A).withValues(alpha: 0.1),
+                        backgroundColor: const Color(0xFF1B8A5A).withOpacity( 0.1),
                         child: Text('${i + 1}',
                             style: const TextStyle(
                                 color: Color(0xFF1B8A5A),
@@ -159,14 +161,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _actionButton(Icons.receipt_long, 'Sales History', () {
+                  child: _actionButton(Icons.receipt_long, l.salesHistory, () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
                   }),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _actionButton(Icons.inventory_2, 'Inventory', () {
+                  child: _actionButton(Icons.inventory_2, l.inventory, () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const InventoryScreen()));
                   }),
@@ -206,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _alertCard(IconData icon, String title, String subtitle, Color color) {
     return Card(
-      color: color.withValues(alpha: 0.1),
+      color: color.withOpacity( 0.1),
       child: ListTile(
         leading: Icon(icon, color: color),
         title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),

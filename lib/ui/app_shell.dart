@@ -72,7 +72,7 @@ class _AppShellState extends State<AppShell> {
                       title: Text(item.label,
                           style: const TextStyle(color: Colors.white)),
                       selected: selected,
-                      selectedTileColor: Colors.white.withValues(alpha: 0.2),
+                      selectedTileColor: Colors.white.withOpacity( 0.2),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -95,7 +95,7 @@ class _AppShellState extends State<AppShell> {
         onDestinationSelected: (i) => setState(() => _index = i),
         elevation: 8,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFF1B8A5A).withValues(alpha: 0.15),
+        indicatorColor: const Color(0xFF1B8A5A).withOpacity( 0.15),
         destinations: [
           for (final e in _items)
             NavigationDestination(

@@ -207,14 +207,14 @@ DECLINE POLITELY FOR:
       final rows = await db.rawQuery(
           "SELECT category, SUM(amount) as total FROM expenses WHERE expense_date >= datetime('now', '-30 days') GROUP BY category ORDER BY total DESC");
       if (rows.isEmpty) return '💸 No expenses recorded this month.';
-      return '💸 Expenses (30 days):\n${rows.map((r) => '• ${r['category']}: ${peso(r['total'])}').join('\n')}';
+      return '💸 Expenses (30 days):\n${rows.map((r) => '• ${r['category']}: ${peso(r['total'] as num?)}').join('\n')}';
     }
 
     if (q.contains('customer') || q.contains('spending')) {
       final rows = await db.rawQuery(
           "SELECT name, total_spent FROM customers ORDER BY total_spent DESC LIMIT 5");
       if (rows.isEmpty) return '👤 No customer data yet.';
-      return '👤 Top customers:\n${rows.map((r) => '• ${r['name']}: ${peso(r['total_spent'])}').join('\n')}';
+      return '👤 Top customers:\n${rows.map((r) => '• ${r['name']}: ${peso(r['total_spent'] as num?)}').join('\n')}';
     }
 
     return '🤖 I can help with: best sellers, profit, reorder, utang, slow movers, anomalies, comparison, expenses, customers.\n\nTry asking one of these!';
@@ -350,7 +350,7 @@ DECLINE POLITELY FOR:
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.05), blurRadius: 4)],
           ),
           child: Row(
             children: [
@@ -396,7 +396,7 @@ DECLINE POLITELY FOR:
             ...insights.map((ins) => Card(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: ins.color.withValues(alpha: 0.15),
+                  backgroundColor: ins.color.withOpacity( 0.15),
                   child: Icon(ins.icon, color: ins.color, size: 20),
                 ),
                 title: Text(ins.title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -424,7 +424,7 @@ DECLINE POLITELY FOR:
         "SELECT COUNT(*) as c, COALESCE(SUM(utang_balance),0) as t FROM customers WHERE utang_balance > 0");
     final utangCount = utang.first['c'] as int;
     if (utangCount > 0) {
-      insights.add(_Insight(Icons.person_off, 'Outstanding Utang', '${peso(utang.first['t'])} from $utangCount customers', Colors.deepOrange));
+      insights.add(_Insight(Icons.person_off, 'Outstanding Utang', '${peso(utang.first['t'] as num?)} from $utangCount customers', Colors.deepOrange));
     }
 
     final today = await db.rawQuery(
@@ -432,7 +432,7 @@ DECLINE POLITELY FOR:
         "WHERE status='COMPLETED' AND date(created_at) = date('now')");
     final todaySales = (today.first['t'] as num?)?.toDouble() ?? 0;
     if (todaySales > 0) {
-      insights.add(_Insight(Icons.today, 'Today\'s Sales', '${peso(todaySales)} revenue, ${peso(today.first['p'])} profit', Colors.green));
+      insights.add(_Insight(Icons.today, 'Today\'s Sales', '${peso(todaySales)} revenue, ${peso(today.first['p'] as num?)} profit', Colors.green));
     } else {
       insights.add(_Insight(Icons.today, 'No Sales Today', 'Start selling to track performance', Colors.grey));
     }

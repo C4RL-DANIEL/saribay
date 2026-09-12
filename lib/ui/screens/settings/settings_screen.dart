@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../data/db/database.dart';
+import '../../../providers/language_provider.dart';
 import '../../../services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -38,43 +41,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['store_phone', _phoneCtrl.text.trim()]);
     await SettingsService.instance.load();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+      final l = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.settingsSaved)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Store Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 12),
-          TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Store Name')),
-          const SizedBox(height: 12),
-          TextField(controller: _addrCtrl, decoration: const InputDecoration(labelText: 'Address'), maxLines: 2),
-          const SizedBox(height: 12),
-          TextField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'Phone')),
-          const SizedBox(height: 24),
-          const Text('Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          // Language selection
+          Text(l.language, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 8),
-          const Card(
+          _buildLanguageSelector(context),
+
+          const SizedBox(height: 24),
+          Text(l.storeInformation, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 12),
+          TextField(controller: _nameCtrl, decoration: InputDecoration(labelText: l.storeName)),
+          const SizedBox(height: 12),
+          TextField(controller: _addrCtrl, decoration: InputDecoration(labelText: l.address), maxLines: 2),
+          const SizedBox(height: 12),
+          TextField(controller: _phoneCtrl, decoration: InputDecoration(labelText: l.phone)),
+
+          const SizedBox(height: 24),
+          Text(l.currency, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Card(
             child: ListTile(
-              leading: Icon(Icons.attach_money),
-              title: Text('PHP (₱)'),
-              subtitle: Text('Philippine Peso — default and only'),
-              trailing: Icon(Icons.check_circle, color: Colors.green),
+              leading: const Icon(Icons.attach_money),
+              title: const Text('PHP (₱)'),
+              subtitle: Text(l.philippinePeso),
+              trailing: const Icon(Icons.check_circle, color: Colors.green),
             ),
           ),
+
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.save),
-            label: const Text('Save Settings'),
+            label: Text(l.saveSettings),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageSelector(BuildContext context) {
+    final lang = context.read<LanguageProvider>();
+    final options = [
+      ('en', 'English 🇺🇸'),
+      ('tl_partial', 'Partial Tagalog 🇵🇭'),
+      ('tl', 'Full Tagalog 🇵🇭'),
+    ];
+    return Card(
+      child: Column(
+        children: options.map((opt) {
+          final isSelected = lang.languageCode == opt.$1;
+          return RadioListTile<String>(
+            title: Text(opt.$2),
+            value: opt.$1,
+            groupValue: lang.languageCode,
+            activeColor: const Color(0xFF1B8A5A),
+            onChanged: (v) {
+              if (v != null) lang.setLanguage(v);
+            },
+          );
+        }).toList(),
       ),
     );
   }

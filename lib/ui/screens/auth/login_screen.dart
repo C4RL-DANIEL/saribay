@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/localization/app_localizations.dart';
 import '../../../providers/session_provider.dart';
 import '../../../services/auth_service.dart';
 import 'setup_screen.dart';
@@ -59,12 +60,12 @@ class _LoginScreenState extends State<LoginScreen>
           .authenticate(_userCtrl.text.trim(), _pinCtrl.text);
       if (!mounted) return;
       if (user == null) {
-        setState(() => _error = 'Invalid username or PIN');
+        setState(() => _error = l.invalidCredentials);
       } else {
         await context.read<SessionProvider>().login(user);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Login failed: $e');
+      if (mounted) setState(() => _error = '${l.error}: $e');
     } finally {
       if (mounted) setState(() => _logging = false);
     }
@@ -72,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (_loading) {
       return const Scaffold(
         body: Center(
@@ -136,9 +138,9 @@ class _LoginScreenState extends State<LoginScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text(
-                              'Sign In',
-                              style: TextStyle(
+                            Text(
+                              l.login,
+                              style: const TextStyle(
                                   fontSize: 22, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 24),
@@ -147,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen>
                             TextFormField(
                               controller: _userCtrl,
                               decoration: InputDecoration(
-                                labelText: 'Username',
+                                labelText: l.username,
                                 prefixIcon: const Icon(Icons.person),
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12)),
@@ -168,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 FilteringTextInputFormatter.digitsOnly,
                               ],
                               decoration: InputDecoration(
-                                labelText: 'PIN',
+                                labelText: l.pin,
                                 prefixIcon: const Icon(Icons.lock),
                                 counterText: '',
                                 border: OutlineInputBorder(
@@ -215,14 +217,14 @@ class _LoginScreenState extends State<LoginScreen>
                                         child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
                                             color: Colors.white))
-                                    : const Row(
+                                    : Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.login, size: 20),
-                                          SizedBox(width: 12),
-                                          Text('Login',
-                                              style: TextStyle(
+                                          const Icon(Icons.login, size: 20),
+                                          const SizedBox(width: 12),
+                                          Text(l.login,
+                                              style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold)),
                                         ],

@@ -36,7 +36,7 @@ class StoreDataService {
     parts.add('- Total: ${p['total']}');
     parts.add('- Out of stock: ${p['out_of_stock']}');
     parts.add('- Low stock: ${p['low_stock']}');
-    parts.add('- Inventory value (at cost): ${peso(p['inventory_value'])}');
+    parts.add('- Inventory value (at cost): ${peso(p['inventory_value'] as num?)}');
     parts.add('');
 
     // Top 10 products by stock
@@ -58,8 +58,8 @@ class StoreDataService {
     final st = salesToday.first;
     parts.add('SALES TODAY:');
     parts.add('- Transactions: ${st['cnt']}');
-    parts.add('- Revenue: ${peso(st['total'])}');
-    parts.add('- Profit: ${peso(st['profit'])}');
+    parts.add('- Revenue: ${peso(st['total'] as num?)}');
+    parts.add('- Profit: ${peso(st['profit'] as num?)}');
     parts.add('');
 
     // Sales this week
@@ -69,8 +69,8 @@ class StoreDataService {
     final sw = salesWeek.first;
     parts.add('SALES THIS WEEK (7 days):');
     parts.add('- Transactions: ${sw['cnt']}');
-    parts.add('- Revenue: ${peso(sw['total'])}');
-    parts.add('- Profit: ${peso(sw['profit'])}');
+    parts.add('- Revenue: ${peso(sw['total'] as num?)}');
+    parts.add('- Profit: ${peso(sw['profit'] as num?)}');
     parts.add('');
 
     // Sales last week
@@ -79,8 +79,8 @@ class StoreDataService {
         "FROM sales WHERE status = 'COMPLETED' AND created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days')");
     final slw = salesLastWeek.first;
     parts.add('SALES LAST WEEK:');
-    parts.add('- Revenue: ${peso(slw['total'])}');
-    parts.add('- Profit: ${peso(slw['profit'])}');
+    parts.add('- Revenue: ${peso(slw['total'] as num?)}');
+    parts.add('- Profit: ${peso(slw['profit'] as num?)}');
     parts.add('');
 
     // Best sellers (30 days)
@@ -92,7 +92,7 @@ class StoreDataService {
     if (bestSellers.isNotEmpty) {
       parts.add('BEST SELLERS (30 days):');
       for (final bs in bestSellers) {
-        parts.add('- ${bs['product_name']}: ${bs['qty']} sold, ${peso(bs['revenue'])}');
+        parts.add('- ${bs['product_name']}: ${bs['qty']} sold, ${peso(bs['revenue'] as num?)}');
       }
       parts.add('');
     }
@@ -132,7 +132,7 @@ class StoreDataService {
       final totalUtang = utang.fold<double>(0, (s, r) => s + (r['utang_balance'] as num).toDouble());
       parts.add('OUTSTANDING UTANG: ${peso(totalUtang)}');
       for (final u in utang) {
-        parts.add('- ${u['name']}: ${peso(u['utang_balance'])} (limit: ${peso(u['credit_limit'])})');
+        parts.add('- ${u['name']}: ${peso(u['utang_balance'] as num?)} (limit: ${peso(u['credit_limit'] as num?)})');
       }
       parts.add('');
     }
@@ -144,7 +144,7 @@ class StoreDataService {
     if (expenses.isNotEmpty) {
       parts.add('EXPENSES (30 days):');
       for (final e in expenses) {
-        parts.add('- ${e['category']}: ${peso(e['total'])}');
+        parts.add('- ${e['category']}: ${peso(e['total'] as num?)}');
       }
       parts.add('');
     }
@@ -157,7 +157,7 @@ class StoreDataService {
     if (topCustomers.isNotEmpty) {
       parts.add('Top customers:');
       for (final c in topCustomers) {
-        parts.add('- ${c['name']}: ${peso(c['total_spent'])} spent, ${peso(c['utang_balance'])} utang');
+        parts.add('- ${c['name']}: ${peso(c['total_spent'] as num?)} spent, ${peso(c['utang_balance'] as num?)} utang');
       }
       parts.add('');
     }
@@ -170,7 +170,7 @@ class StoreDataService {
     if (payments.isNotEmpty) {
       parts.add('PAYMENT METHODS (30 days):');
       for (final pm in payments) {
-        parts.add('- ${pm['method_name']}: ${peso(pm['total'])} (${pm['cnt']} txns)');
+        parts.add('- ${pm['method_name']}: ${peso(pm['total'] as num?)} (${pm['cnt']} txns)');
       }
       parts.add('');
     }
