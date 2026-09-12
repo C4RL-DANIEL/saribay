@@ -236,17 +236,17 @@ class _ReceiptPage extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(child: Text('${item['product_name']} × ${item['quantity']}')),
-                              Text(peso(item['total'])),
+                              Text(peso(item['total'] as num?)),
                             ],
                           ),
                         ))),
                         const Divider(),
                         Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [const Text('Total'), Text(peso(sale['total']), style: const TextStyle(fontWeight: FontWeight.bold))]),
+                            children: [const Text('Total'), Text(peso(sale['total'] as num?), style: const TextStyle(fontWeight: FontWeight.bold))]),
                         Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [const Text('Paid'), Text(peso(sale['amount_paid']))]),
+                            children: [const Text('Paid'), Text(peso(sale['amount_paid'] as num?))]),
                         if (change > 0)
                           Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

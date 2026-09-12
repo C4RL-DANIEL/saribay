@@ -99,10 +99,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               children: [
                 _statCard(Icons.receipt_long, l.todaysSales,
-                    peso(_data['salesToday']), const Color(0xFF1B8A5A)),
+                    peso(_data['salesToday'] as num?), const Color(0xFF1B8A5A)),
                 const SizedBox(width: 12),
                 _statCard(Icons.trending_up, l.profit,
-                    peso(_data['profitToday']), Colors.blue),
+                    peso(_data['profitToday'] as num?), Colors.blue),
               ],
             ),
             const SizedBox(height: 12),
@@ -123,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '${_data['lowStock']} items need restocking', Colors.orange),
             if ((_data['utangCount'] as int) > 0)
               _alertCard(Icons.person_off, l.outstandingUtang,
-                  '${peso(_data['utangTotal'])} from ${_data['utangCount']} customers', Colors.deepOrange),
+                  '${peso(_data['utangTotal'] as num?)} from ${_data['utangCount']} customers', Colors.deepOrange),
 
             const SizedBox(height: 20),
 
@@ -139,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final b = e.value;
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1B8A5A).withOpacity( 0.1),
+                        backgroundColor: const Color(0xFF1B8A5A).withOpacity(0.1),
                         child: Text('${i + 1}',
                             style: const TextStyle(
                                 color: Color(0xFF1B8A5A),
@@ -147,7 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       title: Text(b['product_name'] as String),
                       subtitle: Text('${b['qty']} sold'),
-                      trailing: Text(peso(b['revenue']),
+                      trailing: Text(peso(b['revenue'] as num?),
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                     );
                   }).toList(),
@@ -208,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _alertCard(IconData icon, String title, String subtitle, Color color) {
     return Card(
-      color: color.withOpacity( 0.1),
+      color: color.withOpacity(0.1),
       child: ListTile(
         leading: Icon(icon, color: color),
         title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),

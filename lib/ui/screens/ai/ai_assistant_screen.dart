@@ -350,7 +350,7 @@ DECLINE POLITELY FOR:
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity( 0.05), blurRadius: 4)],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4)],
           ),
           child: Row(
             children: [
@@ -396,7 +396,7 @@ DECLINE POLITELY FOR:
             ...insights.map((ins) => Card(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: ins.color.withOpacity( 0.15),
+                  backgroundColor: ins.color.withOpacity(0.15),
                   child: Icon(ins.icon, color: ins.color, size: 20),
                 ),
                 title: Text(ins.title, style: const TextStyle(fontWeight: FontWeight.bold)),

@@ -56,7 +56,7 @@ class _PurchaseListScreenState extends State<PurchaseListScreen> {
                         : Colors.orange;
                     return ListTile(
                       title: Text(o['po_number'] as String),
-                      subtitle: Text('${o['supplier_name']} · ${peso(o['total_cost'])}'),
+                      subtitle: Text('${o['supplier_name']} · ${peso(o['total_cost'] as num?)}'),
                       trailing: Chip(label: Text(status, style: TextStyle(color: color, fontSize: 11))),
                     );
                   },

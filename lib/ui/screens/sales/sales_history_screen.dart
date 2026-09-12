@@ -71,7 +71,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text(peso(s['total']), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text(peso(s['total'] as num?), style: const TextStyle(fontWeight: FontWeight.bold)),
                                 Text(status, style: TextStyle(color: color, fontSize: 11)),
                               ],
                             ),

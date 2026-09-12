@@ -98,21 +98,21 @@ class _ReportScreenState extends State<ReportScreen> {
       children: [
         _reportCard('Today', [
           _row('Transactions', '${today['cnt']}'),
-          _row('Revenue', peso(today['total'])),
-          _row('Profit', peso(today['profit'])),
-          _row('COGS', peso(today['cogs'])),
+          _row('Revenue', peso(today['total'] as num?)),
+          _row('Profit', peso(today['profit'] as num?)),
+          _row('COGS', peso(today['cogs'] as num?)),
         ]),
         const SizedBox(height: 12),
         _reportCard('This Month (30 days)', [
           _row('Transactions', '${month['cnt']}'),
-          _row('Revenue', peso(month['total'])),
-          _row('Profit', peso(month['profit'])),
+          _row('Revenue', peso(month['total'] as num?)),
+          _row('Profit', peso(month['profit'] as num?)),
         ]),
         const SizedBox(height: 12),
         _reportCard('This Year', [
           _row('Transactions', '${year['cnt']}'),
-          _row('Revenue', peso(year['total'])),
-          _row('Profit', peso(year['profit'])),
+          _row('Revenue', peso(year['total'] as num?)),
+          _row('Profit', peso(year['profit'] as num?)),
         ]),
       ],
     );
@@ -124,7 +124,7 @@ class _ReportScreenState extends State<ReportScreen> {
         _reportCard('Inventory', [
           _row('Total Products', '${_inventory['products']}'),
           _row('Low Stock Items', '${_inventory['lowStock']}'),
-          _row('Inventory Value', peso(_inventory['value'])),
+          _row('Inventory Value', peso(_inventory['value'] as num?)),
         ]),
       ],
     );
@@ -134,8 +134,8 @@ class _ReportScreenState extends State<ReportScreen> {
     return Column(
       children: [
         _reportCard('Financial', [
-          _row('Expenses (30 days)', peso(_financial['expensesMonth'])),
-          _row('Outstanding Utang', peso(_financial['utangTotal'])),
+          _row('Expenses (30 days)', peso(_financial['expensesMonth'] as num?)),
+          _row('Outstanding Utang', peso(_financial['utangTotal'] as num?)),
         ]),
       ],
     );
