@@ -63,6 +63,9 @@ class _LoginScreenState extends State<LoginScreen>
         setState(() => _error = AppLocalizations.of(context).invalidCredentials);
       } else {
         await context.read<SessionProvider>().login(user);
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
       }
     } catch (e) {
       if (mounted) setState(() => _error = '${AppLocalizations.of(context).error}: $e');

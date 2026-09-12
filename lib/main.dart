@@ -9,6 +9,7 @@ import 'data/db/database.dart';
 import 'providers/cart_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/session_provider.dart';
+import 'ui/app_shell.dart';
 import 'ui/screens/auth/login_screen.dart';
 
 Future<void> main() async {
@@ -78,6 +79,7 @@ class SariBayApp extends StatelessWidget {
             routes: {
               '/': (_) => const SplashScreen(),
               '/login': (_) => const LoginScreen(),
+              '/home': (_) => const AppShell(),
             },
           );
         },

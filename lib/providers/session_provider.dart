@@ -17,7 +17,12 @@ class SessionProvider extends ChangeNotifier {
   Future<void> login(AppUser user) async {
     _user = user;
     _branchId = user.branchId ?? 1;
-    await _loadPermissions();
+    try {
+      await _loadPermissions();
+    } catch (e) {
+      // Permissions load failed — continue with empty permissions
+      _perms = {};
+    }
     notifyListeners();
   }
 
