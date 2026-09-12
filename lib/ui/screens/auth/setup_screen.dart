@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../services/auth_service.dart';
+import '../../../services/auth_service.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -23,9 +23,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Owner created. Please log in.')));
-      setState(() {}); // login screen re-checks on rebuild via parent
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const SizedBox()), (_) => false);
+      Navigator.of(context).pop();
     }
   }
 

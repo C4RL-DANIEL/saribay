@@ -6,13 +6,31 @@ import 'data/db/database.dart';
 import 'providers/cart_provider.dart';
 import 'providers/session_provider.dart';
 import 'services/settings_service.dart';
-import 'ui/app_shell.dart';
 import 'ui/screens/auth/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppDatabase.instance.database; // warm DB
-  await SettingsService.instance.load();
+
+  // Error handling — prevent black screen
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text('Error: ${details.exceptionAsString()}',
+              style: const TextStyle(color: Colors.red)),
+        ),
+      ),
+    );
+  };
+
+  try {
+    await AppDatabase.instance.database;
+    await SettingsService.instance.load();
+  } catch (e) {
+    debugPrint('Startup error: $e');
+  }
+
   runApp(const SariBayApp());
 }
 
@@ -30,17 +48,8 @@ class SariBayApp extends StatelessWidget {
         title: 'SariBay POS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
-        home: const RootRouter(),
+        home: const LoginScreen(),
       ),
     );
-  }
-}
-
-class RootRouter extends StatelessWidget {
-  const RootRouter({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<SessionProvider>();
-    return session.isLoggedIn ? const AppShell() : const LoginScreen();
   }
 }
