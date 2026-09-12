@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
+import '../../../providers/connectivity_provider.dart';
 import '../../../services/ai/mimo_api_service.dart';
 import '../../../services/ai/store_data_service.dart';
+import '../../widgets/connectivity_badge.dart';
 
 /// AI assistant powered by MiMo v2.5 with local data fallback.
 class AiAssistantScreen extends StatefulWidget {
@@ -121,7 +124,18 @@ DECLINE POLITELY FOR:
         answer += '\n\n_(Using local analysis — connect to internet for AI-powered answers)_';
       }
     } catch (e) {
-      answer = 'Error: $e\n\nPlease try again.';
+      // Graceful error handling — show friendly message instead of raw exception
+      final errorMsg = e.toString();
+      if (errorMsg.contains('SQLITE_ERROR') || errorMsg.contains('no such column')) {
+        answer = '🔧 I encountered a data issue. Let me try a simpler analysis...\n\n';
+        try {
+          answer += await _localAnswer(q);
+        } catch (_) {
+          answer += 'I\'m having trouble accessing store data right now. Please try again later.';
+        }
+      } else {
+        answer = 'I encountered an error: ${e.toString().length > 200 ? e.toString().substring(0, 200) + "..." : e.toString()}\n\nPlease try again.';
+      }
     }
 
     setState(() {
@@ -226,6 +240,8 @@ DECLINE POLITELY FOR:
       appBar: AppBar(
         title: const Text('AI Assistant'),
         actions: [
+          const ConnectivityBadge(),
+          const SizedBox(width: 8),
           Container(
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -410,54 +426,114 @@ DECLINE POLITELY FOR:
   }
 
   Future<List<_Insight>> _getInsights() async {
-    final db = await AppDatabase.instance.database;
     final insights = <_Insight>[];
+    try {
+      final db = await AppDatabase.instance.database;
 
-    final lowStock = await db.rawQuery(
-        "SELECT COUNT(*) as c FROM products WHERE is_deleted=0 AND min_stock > 0 AND stock <= min_stock");
-    final c = lowStock.first['c'] as int;
-    if (c > 0) {
-      insights.add(_Insight(Icons.warning_amber, 'Low Stock Alert', '$c products need restocking', Colors.orange));
-    }
+      // Low stock
+      final lowStock = await db.rawQuery(
+          "SELECT COUNT(*) as c FROM products WHERE is_deleted=0 AND min_stock > 0 AND stock <= min_stock");
+      final c = lowStock.first['c'] as int;
+      if (c > 0) {
+        insights.add(_Insight(Icons.warning_amber, 'Low Stock Alert', '$c products need restocking. Consider creating a purchase order.', Colors.orange));
+      }
 
-    final utang = await db.rawQuery(
-        "SELECT COUNT(*) as c, COALESCE(SUM(utang_balance),0) as t FROM customers WHERE utang_balance > 0");
-    final utangCount = utang.first['c'] as int;
-    if (utangCount > 0) {
-      insights.add(_Insight(Icons.person_off, 'Outstanding Utang', '${peso(utang.first['t'] as num?)} from $utangCount customers', Colors.deepOrange));
-    }
+      // Utang
+      final utang = await db.rawQuery(
+          "SELECT COUNT(*) as c, COALESCE(SUM(utang_balance),0) as t FROM customers WHERE utang_balance > 0");
+      final utangCount = utang.first['c'] as int;
+      if (utangCount > 0) {
+        insights.add(_Insight(Icons.person_off, 'Outstanding Utang', '${peso(utang.first['t'] as num?)} from $utangCount customers. Collect payments to improve cash flow.', Colors.deepOrange));
+      }
 
-    final today = await db.rawQuery(
-        "SELECT COALESCE(SUM(total),0) as t, COALESCE(SUM(profit),0) as p FROM sales "
-        "WHERE status='COMPLETED' AND date(created_at) = date('now')");
-    final todaySales = (today.first['t'] as num?)?.toDouble() ?? 0;
-    if (todaySales > 0) {
-      insights.add(_Insight(Icons.today, 'Today\'s Sales', '${peso(todaySales)} revenue, ${peso(today.first['p'] as num?)} profit', Colors.green));
-    } else {
-      insights.add(_Insight(Icons.today, 'No Sales Today', 'Start selling to track performance', Colors.grey));
-    }
+      // Today's performance
+      final today = await db.rawQuery(
+          "SELECT COALESCE(SUM(total),0) as t, COALESCE(SUM(profit),0) as p FROM sales "
+          "WHERE status='COMPLETED' AND date(created_at) = date('now')");
+      final todaySales = (today.first['t'] as num?)?.toDouble() ?? 0;
+      if (todaySales > 0) {
+        insights.add(_Insight(Icons.today, 'Today\'s Sales', '${peso(todaySales)} revenue, ${peso(today.first['p'] as num?)} profit', Colors.green));
+      } else {
+        insights.add(_Insight(Icons.today, 'No Sales Today', 'Start selling to track your daily performance.', Colors.grey));
+      }
 
-    final best = await db.rawQuery('''
-      SELECT product_name, SUM(quantity) as qty FROM sale_items si
-      JOIN sales s ON s.id = si.sale_id WHERE s.status='COMPLETED'
-      AND s.created_at >= datetime('now', '-30 days')
-      GROUP BY product_name ORDER BY qty DESC LIMIT 1
-    ''');
-    if (best.isNotEmpty) {
-      insights.add(_Insight(Icons.star, 'Best Seller (30 days)', '${best.first['product_name']}: ${best.first['qty']} sold', Colors.amber));
-    }
+      // Best seller
+      final best = await db.rawQuery('''
+        SELECT product_name, SUM(quantity) as qty FROM sale_items si
+        JOIN sales s ON s.id = si.sale_id WHERE s.status='COMPLETED'
+        AND s.created_at >= datetime('now', '-30 days')
+        GROUP BY product_name ORDER BY qty DESC LIMIT 1
+      ''');
+      if (best.isNotEmpty) {
+        insights.add(_Insight(Icons.star, 'Best Seller (30 days)', '${best.first['product_name']}: ${best.first['qty']} sold. Keep this product well-stocked.', Colors.amber));
+      }
 
-    final refunds = await db.rawQuery(
-        "SELECT COUNT(*) as c FROM sales WHERE status='REFUNDED' AND created_at >= datetime('now', '-7 days')");
-    if ((refunds.first['c'] as int) > 3) {
-      insights.add(_Insight(Icons.bug_report, 'High Refund Rate', '${refunds.first['c']} refunds this week', Colors.red));
+      // Refunds
+      final refunds = await db.rawQuery(
+          "SELECT COUNT(*) as c FROM sales WHERE status='REFUNDED' AND created_at >= datetime('now', '-7 days')");
+      if ((refunds.first['c'] as int) > 3) {
+        insights.add(_Insight(Icons.bug_report, 'High Refund Rate', '${refunds.first['c']} refunds this week. Review transactions for issues.', Colors.red));
+      }
+
+      // AI Recommendations
+      final recommendations = await _generateRecommendations(db);
+      insights.addAll(recommendations);
+
+    } catch (e) {
+      insights.add(_Insight(Icons.info, 'Data Access Issue', 'Some insights unavailable. Using cached data.', Colors.grey));
     }
 
     if (insights.isEmpty) {
-      insights.add(_Insight(Icons.info, 'Getting Started', 'Add products and make sales to see AI insights', Colors.blue));
+      insights.add(_Insight(Icons.info, 'Getting Started', 'Add products and make sales to see AI insights.', Colors.blue));
     }
 
     return insights;
+  }
+
+  Future<List<_Insight>> _generateRecommendations(dynamic db) async {
+    final recs = <_Insight>[];
+
+    try {
+      // Suggest promotions for slow movers
+      final slowMovers = await db.rawQuery('''
+        SELECT p.name, p.stock, COALESCE(SUM(si.quantity),0) as sold
+        FROM products p LEFT JOIN sale_items si ON si.product_id = p.id
+        LEFT JOIN sales s ON s.id = si.sale_id AND s.status='COMPLETED' AND s.created_at >= datetime('now', '-30 days')
+        WHERE p.is_deleted = 0 AND p.is_active = 1 AND p.stock > 10
+        GROUP BY p.id HAVING sold < 3 ORDER BY p.stock DESC LIMIT 1
+      ''');
+      if (slowMovers.isNotEmpty) {
+        recs.add(_Insight(Icons.local_offer, 'Promotion Idea',
+            'Consider promoting "${slowMovers.first['name']}" — ${slowMovers.first['stock']} in stock but only ${slowMovers.first['sold']} sold.',
+            Colors.purple));
+      }
+
+      // High margin products
+      final highMargin = await db.rawQuery(
+          "SELECT name, (selling_price - cost_price) as margin "
+          "FROM products WHERE is_deleted=0 AND selling_price > 0 AND cost_price > 0 "
+          "ORDER BY margin DESC LIMIT 1");
+      if (highMargin.isNotEmpty) {
+        recs.add(_Insight(Icons.trending_up, 'Most Profitable',
+            '"${highMargin.first['name']}" has the highest margin. Feature it prominently.',
+            Colors.green));
+      }
+
+      // Cash flow suggestion
+      final cashIn = await db.rawQuery(
+          "SELECT COALESCE(SUM(amount),0) as t FROM payments WHERE status='CONFIRMED' AND method_name='Cash' AND created_at >= datetime('now', '-7 days')");
+      final expenses = await db.rawQuery(
+          "SELECT COALESCE(SUM(amount),0) as t FROM expenses WHERE expense_date >= datetime('now', '-7 days')");
+      final cashInVal = (cashIn.first['t'] as num?)?.toDouble() ?? 0;
+      final expVal = (expenses.first['t'] as num?)?.toDouble() ?? 0;
+      if (expVal > cashInVal * 0.8 && cashInVal > 0) {
+        recs.add(_Insight(Icons.account_balance, 'Cash Flow Warning',
+            'Expenses (${peso(expVal)}) are high relative to cash income (${peso(cashInVal)}). Review spending.',
+            Colors.deepOrange));
+      }
+    } catch (_) {}
+
+    return recs;
   }
 }
 

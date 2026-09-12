@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/utils/money.dart';
@@ -6,6 +7,7 @@ import '../../../data/db/database.dart';
 import '../../../data/models/models.dart';
 import '../../../data/repositories/product_repository.dart';
 import '../../../providers/cart_provider.dart';
+import '../../widgets/animated_widgets.dart';
 import '../scanner/scanner_screen.dart';
 import 'hold_list_screen.dart';
 import 'payment_screen.dart';
@@ -41,9 +43,22 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   void _addToCart(Product p) {
+    HapticFeedbackHelper.selection();
     context.read<CartProvider>().addProduct(p);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${p.name} added'), duration: const Duration(milliseconds: 600)),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Text('${p.name} added'),
+          ],
+        ),
+        duration: const Duration(milliseconds: 600),
+        backgroundColor: const Color(0xFF1B8A5A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 
@@ -194,30 +209,36 @@ class _PosScreenState extends State<PosScreen> {
                     itemCount: _products.length,
                     itemBuilder: (ctx, i) {
                       final p = _products[i];
-                      return Card(
-                        child: InkWell(
+                      return AnimatedListItem(
+                        index: i,
+                        child: AnimatedCard(
                           onTap: () => _addToCart(p),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Center(
-                                    child: p.imagePath != null
-                                        ? Image.asset(p.imagePath!, fit: BoxFit.cover)
-                                        : Icon(Icons.inventory_2, size: 48, color: Theme.of(context).colorScheme.primary),
-                                  ),
+                          padding: const EdgeInsets.all(8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Center(
+                                  child: p.imagePath != null
+                                      ? Image.asset(p.imagePath!, fit: BoxFit.cover)
+                                      : Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF1B8A5A).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.inventory_2, size: 32, color: Color(0xFF1B8A5A)),
+                                        ),
                                 ),
-                                Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                Text(peso(p.effectivePrice), style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.primary)),
-                                Text('Stock: ${p.stock.toStringAsFixed(0)}',
-                                    style: TextStyle(fontSize: 11, color: p.isLowStock ? Colors.orange : Colors.grey)),
-                              ],
-                            ),
+                              ),
+                              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                              Text(peso(p.effectivePrice), style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1B8A5A))),
+                              Text('Stock: ${p.stock.toStringAsFixed(0)}',
+                                  style: TextStyle(fontSize: 11, color: p.isLowStock ? Colors.orange : Colors.grey)),
+                            ],
                           ),
                         ),
                       );

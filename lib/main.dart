@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'core/localization/localization_delegate.dart';
 import 'data/db/database.dart';
 import 'providers/cart_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/session_provider.dart';
 import 'ui/app_shell.dart';
@@ -55,6 +56,7 @@ class SariBayApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SessionProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (ctx, lang, _) {
@@ -130,7 +132,10 @@ class _SplashScreenState extends State<SplashScreen>
           child: const Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.storefront, size: 100, color: Colors.white),
+              Hero(
+                tag: 'app_logo',
+                child: Icon(Icons.storefront, size: 100, color: Colors.white),
+              ),
               SizedBox(height: 24),
               Text('SariBay POS',
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),

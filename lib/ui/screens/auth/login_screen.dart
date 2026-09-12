@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../providers/session_provider.dart';
 import '../../../services/auth_service.dart';
+import '../../widgets/animated_widgets.dart';
 import 'setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -112,8 +113,11 @@ class _LoginScreenState extends State<LoginScreen>
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  // Brand
-                  const Icon(Icons.storefront, size: 80, color: Colors.white),
+                  // Brand with Hero animation
+                  const Hero(
+                    tag: 'app_logo',
+                    child: Icon(Icons.storefront, size: 80, color: Colors.white),
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'SariBay POS',

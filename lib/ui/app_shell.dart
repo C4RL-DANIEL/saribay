@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/connectivity_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/inventory/inventory_screen.dart';
 import 'screens/more/more_screen.dart';

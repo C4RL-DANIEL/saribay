@@ -181,7 +181,7 @@ class StoreDataService {
     final largeDiscounts = await db.rawQuery(
         "SELECT COUNT(*) as c FROM sales WHERE discount > total * 0.2 AND status = 'COMPLETED' AND created_at >= datetime('now', '-7 days')");
     final cashVariance = await db.rawQuery(
-        "SELECT COUNT(*) as c FROM cash_drawers WHERE ABS(variance) > 100 AND created_at >= datetime('now', '-30 days')");
+        "SELECT COUNT(*) as c FROM cash_drawers WHERE ABS(variance) > 100 AND opened_at >= datetime('now', '-30 days')");
 
     parts.add('ANOMALY INDICATORS:');
     parts.add('- Refunds this week: ${refunds.first['c']}');
