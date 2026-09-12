@@ -60,12 +60,12 @@ class _LoginScreenState extends State<LoginScreen>
           .authenticate(_userCtrl.text.trim(), _pinCtrl.text);
       if (!mounted) return;
       if (user == null) {
-        setState(() => _error = l.invalidCredentials);
+        setState(() => _error = AppLocalizations.of(context).invalidCredentials);
       } else {
         await context.read<SessionProvider>().login(user);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = '${l.error}: $e');
+      if (mounted) setState(() => _error = '${AppLocalizations.of(context).error}: $e');
     } finally {
       if (mounted) setState(() => _logging = false);
     }

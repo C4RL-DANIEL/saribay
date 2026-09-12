@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
-import 'core/localization/app_localizations.dart';
+import 'core/localization/localization_delegate.dart';
 import 'data/db/database.dart';
 import 'providers/cart_provider.dart';
 import 'providers/language_provider.dart';

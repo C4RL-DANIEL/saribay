@@ -102,7 +102,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Card(
       child: Column(
         children: options.map((opt) {
-          final isSelected = lang.languageCode == opt.$1;
           return RadioListTile<String>(
             title: Text(opt.$2),
             value: opt.$1,
