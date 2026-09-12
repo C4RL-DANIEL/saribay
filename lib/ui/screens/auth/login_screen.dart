@@ -21,27 +21,52 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    AuthService.instance.isSetupComplete().then((v) {
-      setState(() { _isSetup = v; _loading = false; });
-    });
+    _checkSetup();
+  }
+
+  Future<void> _checkSetup() async {
+    try {
+      final v = await AuthService.instance.isSetupComplete();
+      if (mounted) setState(() { _isSetup = v; _loading = false; });
+    } catch (e) {
+      // DB might not be ready — show setup screen as fallback
+      if (mounted) setState(() { _isSetup = false; _loading = false; });
+    }
   }
 
   Future<void> _login() async {
     setState(() { _error = null; });
-    final user = await AuthService.instance
-        .authenticate(_userCtrl.text.trim(), _pinCtrl.text);
-    if (!mounted) return;
-    if (user == null) {
-      setState(() => _error = 'Invalid username or PIN');
-    } else {
-      await context.read<SessionProvider>().login(user);
+    try {
+      final user = await AuthService.instance
+          .authenticate(_userCtrl.text.trim(), _pinCtrl.text);
+      if (!mounted) return;
+      if (user == null) {
+        setState(() => _error = 'Invalid username or PIN');
+      } else {
+        await context.read<SessionProvider>().login(user);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Login failed: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.storefront, size: 80, color: Color(0xFF1B8A5A)),
+              SizedBox(height: 24),
+              CircularProgressIndicator(color: Color(0xFF1B8A5A)),
+              SizedBox(height: 16),
+              Text('Loading...'),
+            ],
+          ),
+        ),
+      );
     }
     if (!_isSetup) return const SetupScreen();
     return Scaffold(
@@ -54,8 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.storefront,
-                      size: 72, color: Theme.of(context).colorScheme.primary),
+                  const Icon(Icons.storefront,
+                      size: 72, color: Color(0xFF1B8A5A)),
                   const SizedBox(height: 12),
                   Text('SariBay POS',
                       textAlign: TextAlign.center,
@@ -79,7 +104,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(_error!,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error)),
                   ],
                   const SizedBox(height: 24),
                   FilledButton.icon(
