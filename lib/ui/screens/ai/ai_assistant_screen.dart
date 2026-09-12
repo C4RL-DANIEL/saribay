@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
-import '../../../providers/connectivity_provider.dart';
 import '../../../services/ai/mimo_api_service.dart';
 import '../../../services/ai/store_data_service.dart';
 import '../../widgets/connectivity_badge.dart';

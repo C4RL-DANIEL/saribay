@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../providers/session_provider.dart';
 import '../../../services/auth_service.dart';
-import '../../widgets/animated_widgets.dart';
 import 'setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {

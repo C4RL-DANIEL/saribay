@@ -49,7 +49,6 @@ class _AnimatedButtonState extends State<AnimatedButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -73,16 +72,13 @@ class _AnimatedButtonState extends State<AnimatedButton>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) {
-        setState(() => _isPressed = true);
         _controller.forward();
         HapticFeedbackHelper.light();
       },
       onTapUp: (_) {
-        setState(() => _isPressed = false);
         _controller.reverse();
       },
       onTapCancel: () {
-        setState(() => _isPressed = false);
         _controller.reverse();
       },
       onTap: widget.onPressed,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/connectivity_provider.dart';
+import '../../providers/connectivity_provider.dart';
 
 /// Shows online/offline status badge.
 class ConnectivityBadge extends StatelessWidget {
