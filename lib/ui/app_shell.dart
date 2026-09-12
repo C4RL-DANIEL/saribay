@@ -6,7 +6,7 @@ import 'screens/more/more_screen.dart';
 import 'screens/pos/pos_screen.dart';
 import 'screens/products/product_list_screen.dart';
 
-/// Adaptive main shell: bottom nav (phone) or navigation rail (tablet).
+/// Premium adaptive main shell.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
   @override
@@ -40,19 +40,47 @@ class _AppShellState extends State<AppShell> {
       return Scaffold(
         body: Row(
           children: [
-            NavigationRail(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              extended: MediaQuery.of(context).size.width > 1000,
-              labelType: NavigationRailLabelType.all,
-              destinations: [
-                for (final e in _items)
-                  NavigationRailDestination(
-                    icon: Icon(e.icon),
-                    selectedIcon: Icon(e.selected),
-                    label: Text(e.label),
-                  ),
-              ],
+            // Premium sidebar
+            Container(
+              width: 220,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF1B8A5A), Color(0xFF0D5C3A)],
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  const Icon(Icons.storefront, size: 48, color: Colors.white),
+                  const SizedBox(height: 8),
+                  const Text('SariBay',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
+                  const SizedBox(height: 32),
+                  ...List.generate(_items.length, (i) {
+                    final item = _items[i];
+                    final selected = _index == i;
+                    return ListTile(
+                      leading: Icon(
+                        selected ? item.selected : item.icon,
+                        color: Colors.white,
+                      ),
+                      title: Text(item.label,
+                          style: const TextStyle(color: Colors.white)),
+                      selected: selected,
+                      selectedTileColor: Colors.white.withValues(alpha: 0.2),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      onTap: () => setState(() => _index = i),
+                    );
+                  }),
+                ],
+              ),
             ),
             const VerticalDivider(width: 1),
             Expanded(child: body),
@@ -65,11 +93,14 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
+        elevation: 8,
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFF1B8A5A).withValues(alpha: 0.15),
         destinations: [
           for (final e in _items)
             NavigationDestination(
-              icon: Icon(e.icon),
-              selectedIcon: Icon(e.selected),
+              icon: Icon(e.icon, color: Colors.grey),
+              selectedIcon: Icon(e.selected, color: const Color(0xFF1B8A5A)),
               label: e.label,
             ),
         ],

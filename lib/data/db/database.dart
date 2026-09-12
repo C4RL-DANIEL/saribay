@@ -25,8 +25,8 @@ class AppDatabase {
       onCreate: _create,
       onUpgrade: _upgrade,
       onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-        await db.execute('PRAGMA journal_mode = WAL');
+        await db.rawQuery('PRAGMA foreign_keys = ON');
+        await db.rawQuery('PRAGMA journal_mode = WAL');
       },
     );
     return _db!;

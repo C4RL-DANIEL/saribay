@@ -66,6 +66,9 @@ dependencies:
   collection: ^1.18.0
   sprintf: ^7.0.0
 
+  # ---- AI / HTTP ----
+  http: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

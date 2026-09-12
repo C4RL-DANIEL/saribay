@@ -36,13 +36,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         "FROM sales WHERE status='COMPLETED' AND created_at >= ?", [weekAgo]);
     final lowStock = await db.rawQuery(
         "SELECT COUNT(*) as cnt FROM products WHERE is_deleted=0 AND min_stock > 0 AND stock <= min_stock");
-    final outOfStock = await db.rawQuery(
-        "SELECT COUNT(*) as cnt FROM products WHERE is_deleted=0 AND stock <= 0");
     final utang = await db.rawQuery(
         "SELECT COUNT(*) as cnt, COALESCE(SUM(utang_balance),0) as total FROM customers WHERE utang_balance > 0");
-    final expToday = await db.rawQuery(
-        "SELECT COALESCE(SUM(amount),0) as total FROM expenses WHERE expense_date = ?", [today]);
-    final drawer = await db.query('cash_drawers', where: 'status = ?', whereArgs: ['OPEN'], limit: 1);
     final totalProducts = await db.rawQuery("SELECT COUNT(*) as cnt FROM products WHERE is_deleted=0 AND is_active=1");
     final bestSellers = await db.rawQuery('''
       SELECT si.product_name, SUM(si.quantity) as qty, SUM(si.total) as revenue
@@ -59,11 +54,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'salesWeek': salesWeek.first['total'],
         'profitWeek': salesWeek.first['profit'],
         'lowStock': lowStock.first['cnt'],
-        'outOfStock': outOfStock.first['cnt'],
         'utangCount': utang.first['cnt'],
         'utangTotal': utang.first['total'],
-        'expToday': expToday.first['total'],
-        'cashBalance': drawer.isNotEmpty ? drawer.first['opening_amount'] : 0,
         'totalProducts': totalProducts.first['cnt'],
       };
       _bestSellers = bestSellers;
@@ -73,76 +65,171 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    final ts = Theme.of(context).textTheme;
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('Dashboard', style: ts.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          // Today's summary cards
-          Wrap(spacing: 12, runSpacing: 12, children: [
-            _card(Icons.today, 'Today\'s Sales', peso(_data['salesToday']), Colors.green),
-            _card(Icons.trending_up, 'Today\'s Profit', peso(_data['profitToday']), Colors.blue),
-            _card(Icons.receipt_long, 'Transactions', '${_data['txToday']}', Colors.purple),
-            _card(Icons.shopping_bag, 'Total Products', '${_data['totalProducts']}', Colors.teal),
-          ]),
-          const SizedBox(height: 16),
-          // Alerts
-          Wrap(spacing: 12, runSpacing: 12, children: [
+    if (_loading) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF1B8A5A)),
+              SizedBox(height: 16),
+              Text('Loading dashboard...'),
+            ],
+          ),
+        ),
+      );
+    }
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F6FA),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const Text('Dashboard',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(DateFormat('EEEE, MMM d, yyyy').format(DateTime.now()),
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 20),
+
+            // Today's stats
+            Row(
+              children: [
+                _statCard(Icons.receipt_long, 'Today\'s Sales',
+                    peso(_data['salesToday']), const Color(0xFF1B8A5A)),
+                const SizedBox(width: 12),
+                _statCard(Icons.trending_up, 'Profit',
+                    peso(_data['profitToday']), Colors.blue),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _statCard(Icons.shopping_bag, 'Products',
+                    '${_data['totalProducts']}', Colors.purple),
+                const SizedBox(width: 12),
+                _statCard(Icons.receipt, 'Transactions',
+                    '${_data['txToday']}', Colors.orange),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Alerts
             if ((_data['lowStock'] as int) > 0)
-              _card(Icons.warning_amber, 'Low Stock', '${_data['lowStock']} items', Colors.orange),
-            if ((_data['outOfStock'] as int) > 0)
-              _card(Icons.error_outline, 'Out of Stock', '${_data['outOfStock']} items', Colors.red),
+              _alertCard(Icons.warning_amber, 'Low Stock',
+                  '${_data['lowStock']} items need restocking', Colors.orange),
             if ((_data['utangCount'] as int) > 0)
-              _card(Icons.person_off, 'Utang Owed', peso(_data['utangTotal']), Colors.deepOrange),
-            if ((_data['expToday'] as double) > 0)
-            _card(Icons.money_off, 'Expenses Today', peso(_data['expToday']), Colors.red),
-          ]),
-          const SizedBox(height: 16),
-          if (_bestSellers.isNotEmpty) ...[
-            Text('Best Sellers (7 days)', style: ts.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ..._bestSellers.map((b) => ListTile(
-              dense: true,
-              leading: const Icon(Icons.star, size: 20),
-              title: Text('${b['product_name']}'),
-              trailing: Text('${b['qty']} sold'),
-              subtitle: Text(peso(b['revenue'])),
-            )),
+              _alertCard(Icons.person_off, 'Outstanding Utang',
+                  '${peso(_data['utangTotal'])} from ${_data['utangCount']} customers', Colors.deepOrange),
+
+            const SizedBox(height: 20),
+
+            // Best sellers
+            if (_bestSellers.isNotEmpty) ...[
+              const Text('Best Sellers (7 days)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Card(
+                child: Column(
+                  children: _bestSellers.asMap().entries.map((e) {
+                    final i = e.key;
+                    final b = e.value;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFF1B8A5A).withValues(alpha: 0.1),
+                        child: Text('${i + 1}',
+                            style: const TextStyle(
+                                color: Color(0xFF1B8A5A),
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      title: Text(b['product_name'] as String),
+                      subtitle: Text('${b['qty']} sold'),
+                      trailing: Text(peso(b['revenue']),
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 20),
+
+            // Quick actions
+            Row(
+              children: [
+                Expanded(
+                  child: _actionButton(Icons.receipt_long, 'Sales History', () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
+                  }),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _actionButton(Icons.inventory_2, 'Inventory', () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const InventoryScreen()));
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
           ],
-          const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SalesHistoryScreen())),
-              icon: const Icon(Icons.receipt_long), label: const Text('Sales History'),
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InventoryScreen())),
-              icon: const Icon(Icons.inventory_2), label: const Text('Inventory'),
-            )),
-          ]),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _card(IconData icon, String label, String value, Color color) {
-    return SizedBox(
-      width: 180,
+  Widget _statCard(IconData icon, String label, dynamic value, Color color) {
+    return Expanded(
       child: Card(
-        color: color.withOpacity(0.1),
         child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 6),
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: const TextStyle(fontSize: 12)),
-          ]),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 8),
+              Text('$value',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: color)),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _alertCard(IconData icon, String title, String subtitle, Color color) {
+    return Card(
+      color: color.withValues(alpha: 0.1),
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+        subtitle: Text(subtitle),
+        trailing: Icon(Icons.chevron_right, color: color),
+      ),
+    );
+  }
+
+  Widget _actionButton(IconData icon, String label, VoidCallback onTap) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Icon(icon, size: 32, color: const Color(0xFF1B8A5A)),
+              const SizedBox(height: 8),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
         ),
       ),
     );
