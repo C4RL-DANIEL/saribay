@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
@@ -62,23 +61,16 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       GROUP BY hour ORDER BY hour
     ''');
 
-    // Payment method breakdown
-    final payments = await db.rawQuery('''
-      SELECT method_name, COUNT(*) as cnt, SUM(amount) as total
-      FROM payments WHERE status='CONFIRMED' AND $dateFilter
-      GROUP BY method_name ORDER BY total DESC
-    ''');
-
     setState(() {
+      final revenue = (sales.first['revenue'] as num?)?.toDouble() ?? 0;
+      final profit = (sales.first['profit'] as num?)?.toDouble() ?? 0;
       _data = {
         'transactions': sales.first['transactions'],
-        'revenue': sales.first['revenue'],
-        'profit': sales.first['profit'],
+        'revenue': revenue,
+        'profit': profit,
         'cogs': sales.first['cogs'],
         'avgOrder': sales.first['avg_order'],
-        'margin': (sales.first['revenue'] as num?)?.toDouble()! > 0
-            ? ((sales.first['profit'] as num?)?.toDouble()! / (sales.first['revenue'] as num?)!.toDouble() * 100)
-            : 0,
+        'margin': revenue > 0 ? (profit / revenue * 100) : 0.0,
       };
       _topProducts = topProducts;
       _hourlySales = hourly;
@@ -222,8 +214,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
               itemBuilder: (ctx, i) {
                 final h = _hourlySales[i];
                 final maxTotal = _hourlySales.fold<double>(0, (s, e) => 
-                  (e['total'] as num?)?.toDouble()! > s ? (e['total'] as num?)!.toDouble() : s);
-                final height = maxTotal > 0 ? ((h['total'] as num?)?.toDouble()! / maxTotal * 80) : 0.0;
+                  (e['total'] as num?)?.toDouble() ?? 0 > s ? (e['total'] as num?)?.toDouble() ?? 0 : s);
+                final height = maxTotal > 0 ? ((h['total'] as num?)?.toDouble() ?? 0 / maxTotal * 80) : 0.0;
                 
                 return Container(
                   width: 40,

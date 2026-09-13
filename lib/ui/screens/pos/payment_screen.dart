@@ -7,6 +7,7 @@ import '../../../data/db/database.dart';
 import '../../../providers/cart_provider.dart';
 import '../../../providers/session_provider.dart';
 import '../../../services/pos_service.dart';
+import '../../../services/receipt_service.dart';
 
 /// Payment selection and confirmation screen.
 class PaymentScreen extends StatefulWidget {
@@ -256,9 +257,25 @@ class _ReceiptPage extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
-                  child: const Text('Back to POS'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await ReceiptService.instance.shareReceipt(saleId);
+                        },
+                        icon: const Icon(Icons.share),
+                        label: const Text('Share Receipt'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                        child: const Text('Back to POS'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -69,6 +69,15 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
                                 if (c.utangBalance > 0)
                                   Text(peso(c.utangBalance),
                                       style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                                if (c.loyaltyPoints > 0)
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.star, size: 12, color: Colors.amber),
+                                      Text(' ${c.loyaltyPoints.toStringAsFixed(0)} pts',
+                                          style: const TextStyle(fontSize: 10, color: Colors.amber)),
+                                    ],
+                                  ),
                                 Text('Spent: ${peso(c.totalSpent)}', style: const TextStyle(fontSize: 11)),
                               ],
                             ),
