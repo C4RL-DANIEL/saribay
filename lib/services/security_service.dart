@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,7 +21,6 @@ class SecurityService extends ChangeNotifier {
   static const _keyAutoLogin = 'auto_login_enabled';
   static const _keySessionTimeout = 'session_timeout';
   static const _keyBiometrics = 'biometrics_enabled';
-  static const _keyLastActivity = 'last_activity';
   static const _keyPinHash = 'saved_pin_hash';
 
   SecurityService() {

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../data/models/models.dart';
 import '../../../data/repositories/product_repository.dart';
+import '../../widgets/animated_widgets.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -32,7 +33,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   bool _saving = false;
   String? _imagePath;
 
-  static const _units = ['piece','pack','box','bottle','sachet','can','kilogram','gram','liter','milliliter'];
+  static const _units = ['piece', 'pack', 'box', 'bottle', 'sachet', 'can', 'kilogram', 'gram', 'liter', 'milliliter'];
 
   @override
   void initState() {
@@ -55,6 +56,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  Future<void> _loadCats() async {
+    _categories = await ProductRepository.instance.categories();
+    setState(() {});
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final source = await showDialog<ImageSource>(
@@ -75,32 +81,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         ],
       ),
     );
-    
+
     if (source == null) return;
-    
+
     final pickedFile = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
     if (pickedFile != null) {
-      // Copy to app directory for persistence
       final appDir = await getApplicationDocumentsDirectory();
       final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}${p.extension(pickedFile.path)}';
       final savedFile = await File(pickedFile.path).copy('${appDir.path}/$fileName');
       setState(() => _imagePath = savedFile.path);
     }
-  }
-      _costCtrl.text = p.costPrice.toStringAsFixed(2);
-      _priceCtrl.text = p.sellingPrice.toStringAsFixed(2);
-      _wholesaleCtrl.text = p.wholesalePrice.toStringAsFixed(2);
-      _stockCtrl.text = p.stock.toStringAsFixed(0);
-      _minCtrl.text = p.minStock.toStringAsFixed(0);
-      _maxCtrl.text = p.maxStock.toStringAsFixed(0);
-      _categoryId = p.categoryId;
-      _unit = p.unit;
-    }
-  }
-
-  Future<void> _loadCats() async {
-    _categories = await ProductRepository.instance.categories();
-    setState(() {});
   }
 
   Future<void> _save() async {
@@ -231,12 +221,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 Expanded(child: TextFormField(controller: _maxCtrl, decoration: const InputDecoration(labelText: 'Max Stock'), keyboardType: TextInputType.number)),
               ]),
               const SizedBox(height: 24),
-              FilledButton.icon(
+              AnimatedButton(
                 onPressed: _saving ? null : _save,
-                icon: _saving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save),
-                label: Text(_saving ? 'Saving...' : 'Save Product'),
+                icon: Icons.save,
+                isLoading: _saving,
+                child: const Text('Save Product'),
               ),
             ],
           ),
