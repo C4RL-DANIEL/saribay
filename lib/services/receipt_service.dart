@@ -55,13 +55,13 @@ class ReceiptService {
     
     buffer.writeln('--------------------------------');
     buffer.writeln('SUBTOTAL:${peso(sale['subtotal'] as num?).padLeft(12)}');
-    if ((sale['discount'] as num?)?.toDouble() ?? 0 > 0) {
+    if (((sale['discount'] as num?)?.toDouble() ?? 0) > 0) {
       buffer.writeln('DISCOUNT:${peso(sale['discount'] as num?).padLeft(12)}');
     }
     buffer.writeln('TOTAL:   ${peso(sale['total'] as num?).padLeft(12)}');
     buffer.writeln('');
     buffer.writeln('PAID:    ${peso(sale['amount_paid'] as num?).padLeft(12)}');
-    if ((sale['change_amount'] as num?)?.toDouble() ?? 0 > 0) {
+    if (((sale['change_amount'] as num?)?.toDouble() ?? 0) > 0) {
       buffer.writeln('CHANGE:  ${peso(sale['change_amount'] as num?).padLeft(12)}');
     }
     buffer.writeln('');

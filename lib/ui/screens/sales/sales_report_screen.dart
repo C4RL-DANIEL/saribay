@@ -214,8 +214,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
               itemBuilder: (ctx, i) {
                 final h = _hourlySales[i];
                 final maxTotal = _hourlySales.fold<double>(0, (s, e) => 
-                  (e['total'] as num?)?.toDouble() ?? 0 > s ? (e['total'] as num?)?.toDouble() ?? 0 : s);
-                final height = maxTotal > 0 ? ((h['total'] as num?)?.toDouble() ?? 0 / maxTotal * 80) : 0.0;
+                  ((e['total'] as num?)?.toDouble() ?? 0) > s ? (e['total'] as num?)?.toDouble() ?? 0 : s);
+                final height = maxTotal > 0 ? (((h['total'] as num?)?.toDouble() ?? 0) / maxTotal * 80) : 0.0;
                 
                 return Container(
                   width: 40,
