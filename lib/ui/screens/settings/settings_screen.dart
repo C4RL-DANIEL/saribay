@@ -16,6 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _nameCtrl = TextEditingController();
   final _addrCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _apiEndpointCtrl = TextEditingController();
   bool _loading = true;
 
   @override
@@ -31,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _nameCtrl.text = map['store_name'] ?? '';
     _addrCtrl.text = map['store_address'] ?? '';
     _phoneCtrl.text = map['store_phone'] ?? '';
+    _apiEndpointCtrl.text = map['api_endpoint'] ?? 'https://openrouter.ai/api/v1';
     setState(() => _loading = false);
   }
 
@@ -39,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['store_name', _nameCtrl.text.trim()]);
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['store_address', _addrCtrl.text.trim()]);
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['store_phone', _phoneCtrl.text.trim()]);
+    await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['api_endpoint', _apiEndpointCtrl.text.trim()]);
     await SettingsService.instance.load();
     if (mounted) {
       final l = AppLocalizations.of(context);
@@ -86,6 +89,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: _save,
             icon: const Icon(Icons.save),
             label: Text(l.saveSettings),
+          ),
+
+          const SizedBox(height: 24),
+          // AI API Configuration
+          const Text('AI API Configuration', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: _apiEndpointCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'API Endpoint URL',
+                      hintText: 'https://api.xiaomi.com/v1',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.cloud),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Enter the API endpoint for Xiaomi MiMo v2.5. If the AI shows "Local" status, '
+                    'the API may not be configured correctly.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

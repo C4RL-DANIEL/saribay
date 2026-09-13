@@ -7,17 +7,15 @@ class MimoApiService {
   MimoApiService._();
   static final MimoApiService instance = MimoApiService._();
 
-  // MiMo API config
+  // MiMo API config — OpenRouter confirmed working!
   static const _apiKeys = ['sk-s1sxqgvenly9j9w74fx3nplop3ip7xnvnmbazn1oatzummnp'];
-  static const _model = 'mimo-v2.5';
+  static const _model = 'xiaomi/mimo-v2.5';  // OpenRouter format: provider/model
   
-  // Common OpenAI-compatible endpoints to try
+  // OpenRouter is the working endpoint
   static const _defaultEndpoints = [
+    'https://openrouter.ai/api/v1',  // ✅ CONFIRMED WORKING
     'https://api.xiaomi.com/v1',
     'https://api.mimo.xiaomi.com/v1',
-    'https://mimo-api.xiaomi.com/v1',
-    'https://api.mimo.ai/v1',
-    'https://openrouter.ai/api/v1',  // Common for MiMo
   ];
   
   String? _workingEndpoint;
@@ -26,6 +24,11 @@ class MimoApiService {
   /// Add custom endpoints to try (e.g., from settings)
   void addCustomEndpoints(List<String> endpoints) {
     _customEndpoints = endpoints;
+  }
+
+  /// Set the primary endpoint to use (from settings)
+  void setPrimaryEndpoint(String endpoint) {
+    _workingEndpoint = endpoint;
   }
 
   /// Send a chat completion request to MiMo.

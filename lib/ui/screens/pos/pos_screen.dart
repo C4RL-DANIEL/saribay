@@ -62,6 +62,56 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
+  void _showManualBarcodeDialog() {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enter Barcode'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(
+            hintText: 'Type barcode manually',
+            prefixIcon: Icon(Icons.keyboard),
+          ),
+          autofocus: true,
+          onSubmitted: (v) async {
+            Navigator.pop(ctx);
+            if (v.isNotEmpty) {
+              final p = await ProductRepository.instance.findByBarcode(v);
+              if (p != null) {
+                _addToCart(p);
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Barcode not found: $v')),
+                );
+              }
+            }
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (ctrl.text.isNotEmpty) {
+                final p = await ProductRepository.instance.findByBarcode(ctrl.text);
+                if (p != null) {
+                  _addToCart(p);
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Barcode not found: ${ctrl.text}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _checkout() async {
     final cart = context.read<CartProvider>();
     if (cart.items.isEmpty) {
@@ -104,6 +154,9 @@ class _PosScreenState extends State<PosScreen> {
                     );
                   }
                 }
+              } else {
+                // Manual entry requested
+                _showManualBarcodeDialog();
               }
             },
             tooltip: 'Scan',

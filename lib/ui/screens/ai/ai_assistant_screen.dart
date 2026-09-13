@@ -77,6 +77,16 @@ DECLINE POLITELY FOR:
   }
 
   Future<void> _checkApi() async {
+    // Load API endpoint from settings
+    final db = await AppDatabase.instance.database;
+    final settings = await db.query('settings', where: "key = 'api_endpoint'");
+    if (settings.isNotEmpty) {
+      final endpoint = settings.first['value'] as String?;
+      if (endpoint != null && endpoint.isNotEmpty) {
+        MimoApiService.instance.setPrimaryEndpoint(endpoint);
+      }
+    }
+    
     _apiAvailable = await MimoApiService.instance.healthCheck();
     if (mounted) setState(() {});
   }
