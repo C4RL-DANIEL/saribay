@@ -12,6 +12,7 @@ import 'providers/language_provider.dart';
 import 'providers/session_provider.dart';
 import 'ui/app_shell.dart';
 import 'ui/screens/auth/login_screen.dart';
+import 'ui/widgets/animated_widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,18 +126,18 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B8A5A),
-      body: Center(
-        child: FadeTransition(
-          opacity: _fade,
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Hero(
-                tag: 'app_logo',
-                child: Icon(Icons.storefront, size: 100, color: Colors.white),
-              ),
-              SizedBox(height: 24),
+      body: AnimatedGradientBackground(
+        child: Center(
+          child: FadeTransition(
+            opacity: _fade,
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Hero(
+                  tag: 'app_logo',
+                  child: Icon(Icons.storefront, size: 100, color: Colors.white),
+                ),
+                SizedBox(height: 24),
               Text('SariBay POS',
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               SizedBox(height: 8),

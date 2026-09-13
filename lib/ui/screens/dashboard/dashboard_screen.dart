@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
+import '../../widgets/animated_widgets.dart';
 import '../sales/sales_history_screen.dart';
 import '../inventory/inventory_screen.dart';
 
@@ -66,15 +67,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (_loading) {
-      return const Scaffold(
-        body: Center(
+      return Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircularProgressIndicator(color: Color(0xFF1B8A5A)),
-              SizedBox(height: 16),
-              Text('Loading dashboard...'),
+              const SizedBox(height: 40),
+              const ShimmerLoading(width: 150, height: 32),
+              const SizedBox(height: 8),
+              const ShimmerLoading(width: 200, height: 16),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(child: ShimmerLoading(height: 120)),
+                  const SizedBox(width: 12),
+                  Expanded(child: ShimmerLoading(height: 120)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: ShimmerLoading(height: 120)),
+                  const SizedBox(width: 12),
+                  Expanded(child: ShimmerLoading(height: 120)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const ShimmerLoading(width: 150, height: 24),
+              const SizedBox(height: 12),
+              ...List.generate(3, (i) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ShimmerLoading(height: 60),
+              )),
             ],
           ),
         ),
@@ -132,23 +159,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(l.bestSellers,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              Card(
+              AnimatedCard(
+                showShadow: true,
                 child: Column(
                   children: _bestSellers.asMap().entries.map((e) {
                     final i = e.key;
                     final b = e.value;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1B8A5A).withOpacity(0.1),
-                        child: Text('${i + 1}',
-                            style: const TextStyle(
-                                color: Color(0xFF1B8A5A),
-                                fontWeight: FontWeight.bold)),
+                    return AnimatedListItem(
+                      index: i,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF1B8A5A).withOpacity(0.1),
+                          child: Text('${i + 1}',
+                              style: const TextStyle(
+                                  color: Color(0xFF1B8A5A),
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                        title: Text(b['product_name'] as String),
+                        subtitle: Text('${b['qty']} sold'),
+                        trailing: Text(peso(b['revenue'] as num?),
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      title: Text(b['product_name'] as String),
-                      subtitle: Text('${b['qty']} sold'),
-                      trailing: Text(peso(b['revenue'] as num?),
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
                     );
                   }).toList(),
                 ),
@@ -184,23 +215,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _statCard(IconData icon, String label, dynamic value, Color color) {
     return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
-              Text('$value',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: color)),
-              const SizedBox(height: 4),
-              Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            ],
-          ),
+      child: AnimatedCard(
+        showShadow: true,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text('$value',
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color)),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          ],
+        ),
         ),
       ),
     );

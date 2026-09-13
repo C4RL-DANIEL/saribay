@@ -4,6 +4,7 @@ import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
 import '../../../services/ai/mimo_api_service.dart';
 import '../../../services/ai/store_data_service.dart';
+import '../../widgets/animated_widgets.dart';
 import '../../widgets/connectivity_badge.dart';
 
 /// AI assistant powered by MiMo v2.5 with local data fallback.
@@ -69,7 +70,8 @@ DECLINE POLITELY FOR:
         'ai',
         'Hello! I\'m SariBay AI, powered by MiMo v2.5. 🤖\n\n'
         'I analyze your real store data to give you business insights.\n\n'
-        'Ask me anything about your store!',
+        'Ask me anything about your store!\n\n'
+        '💡 Tip: If the AI is offline, try asking again to auto-reconnect.',
         DateTime.now()));
     _checkApi();
   }
@@ -117,9 +119,39 @@ DECLINE POLITELY FOR:
           answer += '\n\n_(Using local analysis — API unavailable)_';
         }
       } else {
-        // Local analysis fallback
-        answer = await _localAnswer(q);
-        answer += '\n\n_(Using local analysis — connect to internet for AI-powered answers)_';
+        // Try to reconnect to API
+        final reconnected = await MimoApiService.instance.healthCheck();
+        if (reconnected) {
+          setState(() => _apiAvailable = true);
+          answer = await MimoApiService.instance.chat(
+            systemPrompt: _systemPrompt,
+            userMessage: q,
+            context: storeContext,
+          );
+          if (answer == 'NETWORK_ERROR') {
+            answer = await _localAnswer(q);
+            answer += '\n\n_(Using local analysis — API unavailable)_';
+          }
+        } else {
+          // Try to reconnect
+          final reconnected = await MimoApiService.instance.healthCheck();
+          if (reconnected) {
+            setState(() => _apiAvailable = true);
+            answer = await MimoApiService.instance.chat(
+              systemPrompt: _systemPrompt,
+              userMessage: q,
+              context: storeContext,
+            );
+            if (answer == 'NETWORK_ERROR') {
+              answer = await _localAnswer(q);
+              answer += '\n\n_(Using local analysis — API unavailable)_';
+            }
+          } else {
+            // Local analysis fallback
+            answer = await _localAnswer(q);
+            answer += '\n\n_(Using local analysis — connect to internet for AI-powered answers)_';
+          }
+        }
       }
     } catch (e) {
       // Graceful error handling — show friendly message instead of raw exception
@@ -267,6 +299,23 @@ DECLINE POLITELY FOR:
             ),
           ),
           IconButton(
+            icon: const Icon(Icons.refresh, size: 20),
+            onPressed: () async {
+              setState(() => _apiAvailable = false);
+              final connected = await MimoApiService.instance.healthCheck();
+              setState(() => _apiAvailable = connected);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(connected ? 'API reconnected!' : 'API still unavailable'),
+                    backgroundColor: connected ? Colors.green : Colors.orange,
+                  ),
+                );
+              }
+            },
+            tooltip: 'Reconnect API',
+          ),
+          IconButton(
             icon: Icon(_tab == 0 ? Icons.insights : Icons.chat),
             onPressed: () => setState(() => _tab = _tab == 0 ? 1 : 0),
             tooltip: _tab == 0 ? 'Insights' : 'Chat',
@@ -407,16 +456,24 @@ DECLINE POLITELY FOR:
             const SizedBox(height: 4),
             Text('Automated analysis of your store data', style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 16),
-            ...insights.map((ins) => Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: ins.color.withOpacity(0.15),
-                  child: Icon(ins.icon, color: ins.color, size: 20),
+            ...insights.asMap().entries.map((e) {
+              final i = e.key;
+              final ins = e.value;
+              return AnimatedListItem(
+                index: i,
+                child: AnimatedCard(
+                  showShadow: true,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: ins.color.withOpacity(0.15),
+                      child: Icon(ins.icon, color: ins.color, size: 20),
+                    ),
+                    title: Text(ins.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(ins.message),
+                  ),
                 ),
-                title: Text(ins.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(ins.message),
-              ),
-            )),
+              );
+            }),
           ],
         );
       },

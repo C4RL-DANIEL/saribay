@@ -9,14 +9,13 @@ class HapticFeedbackHelper {
   static void selection() => HapticFeedback.selectionClick();
   static void success() {
     HapticFeedback.mediumImpact();
-    // Could add vibrate pattern for success
   }
   static void error() {
     HapticFeedback.heavyImpact();
   }
 }
 
-/// Animated button with press feedback
+/// Animated button with press feedback and glow effect
 class AnimatedButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onPressed;
@@ -46,25 +45,36 @@ class AnimatedButton extends StatefulWidget {
 }
 
 class _AnimatedButtonState extends State<AnimatedButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _pressController;
+  late AnimationController _glowController;
   late Animation<double> _scaleAnim;
+  late Animation<double> _glowAnim;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _pressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
+    );
+    _glowAnim = Tween<double>(begin: 0.3, end: 0.8).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pressController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -72,87 +82,87 @@ class _AnimatedButtonState extends State<AnimatedButton>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) {
-        _controller.forward();
+        _pressController.forward();
         HapticFeedbackHelper.light();
       },
       onTapUp: (_) {
-        _controller.reverse();
+        _pressController.reverse();
       },
       onTapCancel: () {
-        _controller.reverse();
+        _pressController.reverse();
       },
       onTap: widget.onPressed,
       child: AnimatedBuilder(
-        animation: _scaleAnim,
+        animation: Listenable.merge([_scaleAnim, _glowAnim]),
         builder: (ctx, child) {
           return Transform.scale(
             scale: _scaleAnim.value,
-            child: child,
+            child: Container(
+              height: widget.height,
+              width: widget.isExpanded ? double.infinity : null,
+              decoration: BoxDecoration(
+                gradient: widget.onPressed != null
+                    ? LinearGradient(
+                        colors: [
+                          widget.color ?? const Color(0xFF1B8A5A),
+                          (widget.color ?? const Color(0xFF1B8A5A)).withOpacity(0.8),
+                        ],
+                      )
+                    : null,
+                color: widget.onPressed == null
+                    ? Colors.grey.shade300
+                    : null,
+                borderRadius: BorderRadius.circular(widget.borderRadius!),
+                boxShadow: widget.onPressed != null
+                    ? [
+                        BoxShadow(
+                          color: (widget.color ?? const Color(0xFF1B8A5A))
+                              .withOpacity(_glowAnim.value),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.icon != null) ...[
+                            Icon(widget.icon, color: widget.textColor ?? Colors.white, size: 20),
+                            const SizedBox(width: 8),
+                          ],
+                          DefaultTextStyle(
+                            style: TextStyle(
+                              color: widget.textColor ?? Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            child: widget.child,
+                          ),
+                        ],
+                      ),
+              ),
+            ),
           );
         },
-        child: Container(
-          height: widget.height,
-          width: widget.isExpanded ? double.infinity : null,
-          decoration: BoxDecoration(
-            gradient: widget.onPressed != null
-                ? LinearGradient(
-                    colors: [
-                      widget.color ?? const Color(0xFF1B8A5A),
-                      (widget.color ?? const Color(0xFF1B8A5A)).withOpacity(0.8),
-                    ],
-                  )
-                : null,
-            color: widget.onPressed == null
-                ? Colors.grey.shade300
-                : null,
-            borderRadius: BorderRadius.circular(widget.borderRadius!),
-            boxShadow: widget.onPressed != null
-                ? [
-                    BoxShadow(
-                      color: (widget.color ?? const Color(0xFF1B8A5A))
-                          .withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: widget.isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (widget.icon != null) ...[
-                        Icon(widget.icon, color: widget.textColor ?? Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                      ],
-                      DefaultTextStyle(
-                        style: TextStyle(
-                          color: widget.textColor ?? Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        child: widget.child,
-                      ),
-                    ],
-                  ),
-          ),
-        ),
       ),
     );
   }
 }
 
-/// Animated card with hover/press effect
+/// Animated card with hover/press effect and shimmer
 class AnimatedCard extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -160,6 +170,7 @@ class AnimatedCard extends StatefulWidget {
   final EdgeInsets? padding;
   final double? borderRadius;
   final bool showShadow;
+  final bool showShimmer;
 
   const AnimatedCard({
     super.key,
@@ -169,6 +180,7 @@ class AnimatedCard extends StatefulWidget {
     this.padding,
     this.borderRadius = 16,
     this.showShadow = true,
+    this.showShimmer = false,
   });
 
   @override
@@ -176,52 +188,96 @@ class AnimatedCard extends StatefulWidget {
 }
 
 class _AnimatedCardState extends State<AnimatedCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _pressController;
+  late AnimationController _shimmerController;
   late Animation<double> _scaleAnim;
+  late Animation<double> _shimmerAnim;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _pressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+    
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      CurvedAnimation(parent: _pressController, curve: Curves.easeOut),
+    );
+    _shimmerAnim = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.linear),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pressController.dispose();
+    _shimmerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.onTap != null ? (_) => _controller.forward() : null,
-      onTapUp: widget.onTap != null ? (_) => _controller.reverse() : null,
-      onTapCancel: widget.onTap != null ? () => _controller.reverse() : null,
+      onTapDown: widget.onTap != null ? (_) => _pressController.forward() : null,
+      onTapUp: widget.onTap != null ? (_) => _pressController.reverse() : null,
+      onTapCancel: widget.onTap != null ? () => _pressController.reverse() : null,
       onTap: () {
         HapticFeedbackHelper.light();
         widget.onTap?.call();
       },
       child: AnimatedBuilder(
-        animation: _scaleAnim,
-        builder: (ctx, child) => Transform.scale(scale: _scaleAnim.value, child: child),
-        child: Card(
-          color: widget.color,
-          elevation: widget.showShadow ? 2 : 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(widget.borderRadius!),
-          ),
-          child: Padding(
-            padding: widget.padding ?? const EdgeInsets.all(16),
-            child: widget.child,
-          ),
-        ),
+        animation: Listenable.merge([_scaleAnim, _shimmerAnim]),
+        builder: (ctx, child) {
+          return Transform.scale(
+            scale: _scaleAnim.value,
+            child: Stack(
+              children: [
+                Card(
+                  color: widget.color,
+                  elevation: widget.showShadow ? 3 : 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(widget.borderRadius!),
+                  ),
+                  child: Padding(
+                    padding: widget.padding ?? const EdgeInsets.all(16),
+                    child: widget.child,
+                  ),
+                ),
+                if (widget.showShimmer)
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(widget.borderRadius!),
+                      child: AnimatedBuilder(
+                        animation: _shimmerAnim,
+                        builder: (ctx, _) {
+                          return Transform.translate(
+                            offset: Offset(_shimmerAnim.value * 100, 0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.white.withOpacity(0.1),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -295,26 +351,34 @@ class SuccessAnimation extends StatefulWidget {
 }
 
 class _SuccessAnimationState extends State<SuccessAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late AnimationController _rotateController;
   late Animation<double> _scaleAnim;
   late Animation<double> _rotateAnim;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _scaleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    
     _scaleAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
     _rotateAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      CurvedAnimation(parent: _rotateController, curve: Curves.easeOut),
     );
-    _controller.forward();
-    _controller.addStatusListener((status) {
+    
+    _scaleController.forward();
+    _rotateController.forward();
+    _scaleController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         Future.delayed(const Duration(seconds: 1), widget.onComplete);
       }
@@ -323,7 +387,8 @@ class _SuccessAnimationState extends State<SuccessAnimation>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scaleController.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
@@ -471,4 +536,67 @@ class ScaleRoute<T> extends PageRouteBuilder<T> {
           },
           transitionDuration: const Duration(milliseconds: 300),
         );
+}
+
+/// Animated gradient background
+class AnimatedGradientBackground extends StatefulWidget {
+  final Widget child;
+  final List<Color> colors;
+  
+  const AnimatedGradientBackground({
+    super.key,
+    required this.child,
+    this.colors = const [Color(0xFF1B8A5A), Color(0xFF0D5C3A), Color(0xFF0A4A2F)],
+  });
+
+  @override
+  State<AnimatedGradientBackground> createState() => _AnimatedGradientBackgroundState();
+}
+
+class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (ctx, _) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.colors,
+              stops: [
+                _animation.value * 0.2,
+                _animation.value * 0.5 + 0.2,
+                _animation.value * 0.8 + 0.4,
+              ],
+            ),
+          ),
+          child: widget.child,
+        );
+      },
+    );
+  }
 }

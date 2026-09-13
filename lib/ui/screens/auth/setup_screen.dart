@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../services/auth_service.dart';
+import '../../widgets/animated_widgets.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key});
@@ -60,7 +61,10 @@ class _SetupScreenState extends State<SetupScreen> {
               children: [
                 // Header
                 const SizedBox(height: 20),
-                const Icon(Icons.storefront, size: 80, color: Colors.white),
+                const Hero(
+                  tag: 'app_logo',
+                  child: Icon(Icons.storefront, size: 80, color: Colors.white),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Welcome!',
@@ -79,10 +83,9 @@ class _SetupScreenState extends State<SetupScreen> {
                 const SizedBox(height: 32),
 
                 // Form card
-                Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                AnimatedCard(
+                  showShadow: true,
+                  showShimmer: true,
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Form(
@@ -194,16 +197,12 @@ class _SetupScreenState extends State<SetupScreen> {
                           const SizedBox(height: 24),
 
                           // Start button
-                          SizedBox(
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _saving ? null : _create,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1B8A5A),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                                elevation: 4,
+                          AnimatedButton(
+                            onPressed: _saving ? null : _create,
+                            icon: Icons.rocket_launch,
+                            isLoading: _saving,
+                            child: const Text('Start'),
+                          ),
                               ),
                               child: _saving
                                   ? const SizedBox(

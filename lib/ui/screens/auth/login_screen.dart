@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../providers/session_provider.dart';
 import '../../../services/auth_service.dart';
+import '../../widgets/animated_widgets.dart';
 import 'setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -96,12 +97,20 @@ class _LoginScreenState extends State<LoginScreen>
     if (!_isSetup) return const SetupScreen();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1B8A5A), Color(0xFF0D5C3A)],
+      body: AnimatedGradientBackground(
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeIn,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  // Brand with Hero animation
+                  const Hero(
+                    tag: 'app_logo',
+                    child: Icon(Icons.storefront, size: 80, color: Colors.white),
+                  ),
           ),
         ),
         child: SafeArea(
