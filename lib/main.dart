@@ -10,6 +10,7 @@ import 'providers/cart_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/session_provider.dart';
+import 'services/security_service.dart';
 import 'ui/app_shell.dart';
 import 'ui/screens/auth/login_screen.dart';
 import 'ui/widgets/animated_widgets.dart';
@@ -58,6 +59,7 @@ class SariBayApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
+        ChangeNotifierProvider(create: (_) => SecurityService()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (ctx, lang, _) {
@@ -138,17 +140,18 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Icon(Icons.storefront, size: 100, color: Colors.white),
                 ),
                 SizedBox(height: 24),
-              Text('SariBay POS',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              SizedBox(height: 8),
-              Text('Sari-Sari Store Management',
-                  style: TextStyle(fontSize: 14, color: Colors.white70)),
-              SizedBox(height: 48),
-              SizedBox(
-                width: 30, height: 30,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-              ),
-            ],
+                Text('SariBay POS',
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                SizedBox(height: 8),
+                Text('Sari-Sari Store Management',
+                    style: TextStyle(fontSize: 14, color: Colors.white70)),
+                SizedBox(height: 48),
+                SizedBox(
+                  width: 30, height: 30,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                ),
+              ],
+            ),
           ),
         ),
       ),

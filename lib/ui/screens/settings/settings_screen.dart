@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/localization/app_localizations.dart';
 import '../../../data/db/database.dart';
 import '../../../providers/language_provider.dart';
+import '../../../services/security_service.dart';
 import '../../../services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -18,6 +20,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _phoneCtrl = TextEditingController();
   final _apiEndpointCtrl = TextEditingController();
   bool _loading = true;
+  bool _autoLogin = false;
+  bool _biometricsEnabled = false;
+  int _sessionTimeout = 30;
 
   @override
   void initState() {
@@ -33,6 +38,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _addrCtrl.text = map['store_address'] ?? '';
     _phoneCtrl.text = map['store_phone'] ?? '';
     _apiEndpointCtrl.text = map['api_endpoint'] ?? 'https://openrouter.ai/api/v1';
+    
+    // Load security settings from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    _autoLogin = prefs.getBool('auto_login_enabled') ?? false;
+    _sessionTimeout = prefs.getInt('session_timeout') ?? 30;
+    
     setState(() => _loading = false);
   }
 
@@ -43,10 +54,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['store_phone', _phoneCtrl.text.trim()]);
     await db.rawInsert("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", ['api_endpoint', _apiEndpointCtrl.text.trim()]);
     await SettingsService.instance.load();
+    
+    // Save security settings to SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_login_enabled', _autoLogin);
+    await prefs.setInt('session_timeout', _sessionTimeout);
+    
+    // Update SecurityService
+    final security = context.read<SecurityService>();
+    await security.setSessionTimeout(_sessionTimeout);
+    
     if (mounted) {
       final l = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.settingsSaved)));
     }
+  }
+
+  void _showTimeoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Session Timeout'),
+        children: [5, 10, 15, 30, 60].map((mins) => SimpleDialogOption(
+          onPressed: () {
+            setState(() => _sessionTimeout = mins);
+            Navigator.pop(ctx);
+          },
+          child: Row(
+            children: [
+              if (_sessionTimeout == mins) const Icon(Icons.check, color: Color(0xFF1B8A5A)),
+              if (_sessionTimeout == mins) const SizedBox(width: 8),
+              Text('$mins minutes'),
+            ],
+          ),
+        )).toList(),
+      ),
+    );
   }
 
   @override
@@ -81,6 +124,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('PHP (₱)'),
               subtitle: Text(l.philippinePeso),
               trailing: const Icon(Icons.check_circle, color: Colors.green),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          // Security Settings
+          const Text('Security', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 8),
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Auto-Login'),
+                  subtitle: const Text('Remember username for faster login'),
+                  value: _autoLogin,
+                  onChanged: (v) => setState(() => _autoLogin = v),
+                  secondary: const Icon(Icons.login),
+                ),
+                SwitchListTile(
+                  title: const Text('Biometric Login'),
+                  subtitle: const Text('Use fingerprint or face ID'),
+                  value: _biometricsEnabled,
+                  onChanged: (v) async {
+                    final security = context.read<SecurityService>();
+                    await security.setBiometrics(v);
+                    setState(() => _biometricsEnabled = v);
+                  },
+                  secondary: const Icon(Icons.fingerprint),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.timer),
+                  title: const Text('Session Timeout'),
+                  subtitle: Text('$_sessionTimeout minutes'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showTimeoutDialog(),
+                ),
+              ],
             ),
           ),
 

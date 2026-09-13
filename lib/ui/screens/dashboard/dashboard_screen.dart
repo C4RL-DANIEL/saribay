@@ -107,7 +107,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
     }
-    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: RefreshIndicator(
@@ -231,7 +230,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 4),
             Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
           ],
-        ),
         ),
       ),
     );

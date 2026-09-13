@@ -203,27 +203,6 @@ class _SetupScreenState extends State<SetupScreen> {
                             isLoading: _saving,
                             child: const Text('Start'),
                           ),
-                              ),
-                              child: _saving
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white))
-                                  : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.rocket_launch, size: 20),
-                                        SizedBox(width: 12),
-                                        Text('Start',
-                                            style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                            ),
-                          ),
                         ],
                       ),
                     ),

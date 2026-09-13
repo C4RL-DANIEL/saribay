@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../data/models/models.dart';
 import '../../../data/repositories/product_repository.dart';
@@ -26,6 +30,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   String _unit = 'piece';
   List<Category> _categories = [];
   bool _saving = false;
+  String? _imagePath;
 
   static const _units = ['piece','pack','box','bottle','sachet','can','kilogram','gram','liter','milliliter'];
 
@@ -38,6 +43,50 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       _nameCtrl.text = p.name;
       _skuCtrl.text = p.sku ?? '';
       _descCtrl.text = p.description;
+      _costCtrl.text = p.costPrice.toStringAsFixed(2);
+      _priceCtrl.text = p.sellingPrice.toStringAsFixed(2);
+      _wholesaleCtrl.text = p.wholesalePrice.toStringAsFixed(2);
+      _stockCtrl.text = p.stock.toStringAsFixed(0);
+      _minCtrl.text = p.minStock.toStringAsFixed(0);
+      _maxCtrl.text = p.maxStock.toStringAsFixed(0);
+      _categoryId = p.categoryId;
+      _unit = p.unit;
+      _imagePath = p.imagePath;
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Select Image Source'),
+        actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.pop(ctx, ImageSource.camera),
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Camera'),
+          ),
+          TextButton.icon(
+            onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
+            icon: const Icon(Icons.photo_library),
+            label: const Text('Gallery'),
+          ),
+        ],
+      ),
+    );
+    
+    if (source == null) return;
+    
+    final pickedFile = await picker.pickImage(source: source, maxWidth: 800, maxHeight: 800, imageQuality: 85);
+    if (pickedFile != null) {
+      // Copy to app directory for persistence
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}${p.extension(pickedFile.path)}';
+      final savedFile = await File(pickedFile.path).copy('${appDir.path}/$fileName');
+      setState(() => _imagePath = savedFile.path);
+    }
+  }
       _costCtrl.text = p.costPrice.toStringAsFixed(2);
       _priceCtrl.text = p.sellingPrice.toStringAsFixed(2);
       _wholesaleCtrl.text = p.wholesalePrice.toStringAsFixed(2);
@@ -64,6 +113,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         sku: _skuCtrl.text.trim().isNotEmpty ? _skuCtrl.text.trim() : null,
         description: _descCtrl.text.trim(),
         categoryId: _categoryId,
+        imagePath: _imagePath,
         unit: _unit,
         costPrice: double.tryParse(_costCtrl.text) ?? 0,
         sellingPrice: double.tryParse(_priceCtrl.text) ?? 0,
@@ -97,6 +147,40 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Product image
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: _imagePath != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              File(_imagePath!),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 48),
+                            ),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.camera_alt, size: 32, color: Colors.grey.shade600),
+                              const SizedBox(height: 4),
+                              Text('Add Photo', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Product name
               TextFormField(
                 controller: _nameCtrl,
                 decoration: const InputDecoration(labelText: 'Product Name *'),
