@@ -6,6 +6,7 @@ import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
 import '../../widgets/animated_widgets.dart';
 import '../sales/sales_history_screen.dart';
+import '../sales/sales_report_screen.dart';
 import '../inventory/inventory_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -191,7 +192,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _actionButton(Icons.receipt_long, l.salesHistory, () {
+                  child: _actionButton(Icons.receipt_long, 'Reports', () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const SalesReportScreen()));
+                  }),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _actionButton(Icons.history, 'History', () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (_) => const SalesHistoryScreen()));
                   }),

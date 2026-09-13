@@ -77,8 +77,11 @@ class _LoginScreenState extends State<LoginScreen>
     if (autoLogin && savedUsername != null) {
       setState(() {
         _userCtrl.text = savedUsername;
-        _showBiometricButton = true;
       });
+    }
+    // Always show biometric button if available
+    if (_biometricsAvailable) {
+      setState(() => _showBiometricButton = true);
     }
   }
 

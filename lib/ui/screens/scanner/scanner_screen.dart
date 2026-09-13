@@ -13,30 +13,41 @@ class _ScannerScreenState extends State<ScannerScreen> {
   MobileScannerController? _controller;
   bool _popped = false;
   bool _flashOn = false;
-  String? _lastScanned;
-  bool _continuousMode = true;
+  bool _isLandscape = false;
 
   @override
   void initState() {
     super.initState();
-    // Lock to portrait for phones, allow rotation for tablets
-    final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
-    if (!isTablet) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
-    } else {
-      // Allow all orientations on tablets
-      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
-    }
-    
     _controller = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
       torchEnabled: false,
       returnImage: false,
     );
+    
+    // Check orientation after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkOrientation();
+    });
+  }
+
+  void _checkOrientation() {
+    if (!mounted) return;
+    final mediaQuery = MediaQuery.of(context);
+    final isTablet = mediaQuery.size.shortestSide >= 600;
+    
+    if (isTablet) {
+      SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      setState(() {
+        _isLandscape = mediaQuery.orientation == Orientation.landscape;
+      });
+    } else {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      setState(() => _isLandscape = false);
+    }
   }
 
   @override
@@ -50,35 +61,29 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (_popped) return;
     
     final barcode = capture.barcodes.firstOrNull?.rawValue;
-    if (barcode != null && barcode.isNotEmpty && barcode != _lastScanned) {
-      _lastScanned = barcode;
+    if (barcode != null && barcode.isNotEmpty) {
+      _popped = true;
       HapticFeedback.mediumImpact();
       
-      if (_continuousMode) {
-        // Show brief feedback then continue scanning
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text('Scanned: $barcode'),
-              ],
-            ),
-            duration: const Duration(milliseconds: 800),
-            backgroundColor: const Color(0xFF1B8A5A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // Show success message then pop
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text('Scanned: $barcode'),
+            ],
           ),
-        );
-        // Return the barcode
-        _popped = true;
-        Navigator.pop(context, barcode);
-      } else {
-        // Single scan mode - return immediately
-        _popped = true;
-        Navigator.pop(context, barcode);
-      }
+          duration: const Duration(milliseconds: 500),
+          backgroundColor: const Color(0xFF1B8A5A),
+        ),
+      );
+      
+      // Pop with the barcode after a short delay
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) Navigator.pop(context, barcode);
+      });
     }
   }
 
@@ -98,122 +103,214 @@ class _ScannerScreenState extends State<ScannerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
+        child: _isLandscape ? _buildLandscapeLayout(isTablet) : _buildPortraitLayout(isTablet),
+      ),
+    );
+  }
+
+  Widget _buildPortraitLayout(bool isTablet) {
+    return Column(
+      children: [
+        // Top bar
+        _buildTopBar(),
+        
+        // Scanner area
+        Expanded(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              MobileScanner(
+                controller: _controller!,
+                onDetect: _onDetect,
+              ),
+              _buildOverlay(isTablet),
+              _buildInstructions(isTablet),
+            ],
+          ),
+        ),
+        
+        // Bottom controls
+        _buildControls(),
+      ],
+    );
+  }
+
+  Widget _buildLandscapeLayout(bool isTablet) {
+    return Row(
+      children: [
+        // Scanner area (left)
+        Expanded(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              MobileScanner(
+                controller: _controller!,
+                onDetect: _onDetect,
+              ),
+              _buildOverlay(isTablet),
+              _buildInstructions(isTablet),
+            ],
+          ),
+        ),
+        
+        // Controls panel (right)
+        Container(
+          width: 200,
+          color: Colors.black87,
+          child: Column(
+            children: [
+              // Top bar
+              Container(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Scan',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Colors.white24),
+              // Control buttons
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildControlButton(
+                      icon: Icons.flash_on,
+                      label: 'Flash',
+                      onTap: _toggleFlash,
+                      isActive: _flashOn,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildControlButton(
+                      icon: Icons.cameraswitch,
+                      label: 'Switch',
+                      onTap: _switchCamera,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildControlButton(
+                      icon: Icons.keyboard,
+                      label: 'Manual',
+                      onTap: () {
+                        Navigator.pop(context, null);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.black87,
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const Expanded(
+            child: Text(
+              'Scan Barcode',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              _flashOn ? Icons.flash_on : Icons.flash_off,
+              color: _flashOn ? Colors.yellow : Colors.white,
+            ),
+            onPressed: _toggleFlash,
+          ),
+          IconButton(
+            icon: const Icon(Icons.cameraswitch, color: Colors.white),
+            onPressed: _switchCamera,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverlay(bool isTablet) {
+    return CustomPaint(
+      painter: ScannerOverlay(
+        borderColor: const Color(0xFF1B8A5A),
+        overlayColor: Colors.black.withOpacity(0.5),
+        borderRadius: 12,
+        borderLength: isTablet ? 80 : 60,
+        borderWidth: 4,
+      ),
+      size: Size.infinite,
+    );
+  }
+
+  Widget _buildInstructions(bool isTablet) {
+    return Positioned(
+      bottom: isTablet ? 60 : 40,
+      left: 0,
+      right: 0,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Top bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.black87,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      'Scan Barcode',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _flashOn ? Icons.flash_on : Icons.flash_off,
-                      color: _flashOn ? Colors.yellow : Colors.white,
-                    ),
-                    onPressed: _toggleFlash,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.cameraswitch, color: Colors.white),
-                    onPressed: _switchCamera,
-                  ),
-                ],
-              ),
-            ),
-            
-            // Scanner area
-            Expanded(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Camera preview
-                  MobileScanner(
-                    controller: _controller!,
-                    onDetect: _onDetect,
-                  ),
-                  
-                  // Overlay with cutout
-                  CustomPaint(
-                    painter: ScannerOverlay(
-                      borderColor: const Color(0xFF1B8A5A),
-                      overlayColor: Colors.black.withOpacity(0.5),
-                      borderRadius: 12,
-                      borderLength: isTablet ? 80 : 60,
-                      borderWidth: 4,
-                    ),
-                    size: Size.infinite,
-                  ),
-                  
-                  // Instructions
-                  Positioned(
-                    bottom: isTablet ? 60 : 40,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 32),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Align barcode within the frame',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Bottom controls
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.black87,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildControlButton(
-                    icon: Icons.flash_on,
-                    label: 'Flash',
-                    onTap: _toggleFlash,
-                    isActive: _flashOn,
-                  ),
-                  _buildControlButton(
-                    icon: Icons.cameraswitch,
-                    label: 'Switch',
-                    onTap: _switchCamera,
-                  ),
-                  _buildControlButton(
-                    icon: Icons.keyboard,
-                    label: 'Manual',
-                    onTap: () {
-                      _popped = true;
-                      Navigator.pop(context, null); // Return null for manual entry
-                    },
-                  ),
-                ],
-              ),
+            Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Align barcode within the frame',
+              style: TextStyle(color: Colors.white, fontSize: 14),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildControls() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.black87,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildControlButton(
+            icon: Icons.flash_on,
+            label: 'Flash',
+            onTap: _toggleFlash,
+            isActive: _flashOn,
+          ),
+          _buildControlButton(
+            icon: Icons.cameraswitch,
+            label: 'Switch',
+            onTap: _switchCamera,
+          ),
+          _buildControlButton(
+            icon: Icons.keyboard,
+            label: 'Manual',
+            onTap: () {
+              Navigator.pop(context, null);
+            },
+          ),
+        ],
       ),
     );
   }

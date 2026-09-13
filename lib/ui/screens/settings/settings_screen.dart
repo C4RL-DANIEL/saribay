@@ -37,7 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _nameCtrl.text = map['store_name'] ?? '';
     _addrCtrl.text = map['store_address'] ?? '';
     _phoneCtrl.text = map['store_phone'] ?? '';
-    _apiEndpointCtrl.text = map['api_endpoint'] ?? 'https://openrouter.ai/api/v1';
+    _apiEndpointCtrl.text = map['api_endpoint'] ?? 'https://api.xiaomimimo.com/v1';
     
     // Load security settings from SharedPreferences
     final prefs = await SharedPreferences.getInstance();

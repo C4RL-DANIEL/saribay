@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/utils/money.dart';
 import '../../../data/db/database.dart';
+import '../../../services/ai/ai_memory_service.dart';
 import '../../../services/ai/mimo_api_service.dart';
 import '../../../services/ai/store_data_service.dart';
 import '../../widgets/animated_widgets.dart';
@@ -23,33 +24,32 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   bool _apiAvailable = false;
 
   static const _systemPrompt = '''
-You are SariBay AI, a smart business assistant for a Sari-Sari store in the Philippines.
+You are SariBay AI, an intelligent agentic business assistant for a Sari-Sari store in the Philippines.
 
-RULES:
-1. ONLY answer questions related to the store's business: sales, inventory, products, customers, utang/credit, suppliers, expenses, cash drawer, profit, promotions, employees, and store operations.
-2. If a question is NOT related to the store (e.g., politics, general knowledge, coding), politely decline and redirect to store topics.
-3. Use the provided store data to give specific, actionable answers.
-4. Always use Philippine Peso (₱) for money amounts.
-5. Be concise but helpful. Use bullet points for lists.
-6. If data is missing for a question, say so honestly.
-7. Suggest specific actions the store owner can take.
-8. Never make up data — only use what's provided in the context.
+CORE CAPABILITIES:
+1. Answer questions about sales, inventory, products, customers, utang/credit, suppliers, expenses, cash drawer, profit, promotions, employees, and store operations.
+2. Analyze data and provide actionable recommendations.
+3. Detect anomalies and alert the owner.
+4. Suggest specific actions to improve business.
+5. Remember past conversations and patterns (via memory context).
 
-EXAMPLE QUESTIONS YOU CAN ANSWER:
-- What should I reorder?
-- Which products are most profitable?
-- How is my cash flow?
-- Who are my best customers?
-- Are there any anomalies in my sales?
-- What promotions should I run?
-- How do my expenses compare to revenue?
-- Which products are expiring soon?
+AGENTIC BEHAVIORS:
+- When asked about profit, calculate margins and suggest ways to increase them.
+- When asked about inventory, check for low stock and recommend reorders with quantities.
+- When asked about customers, analyze spending patterns and suggest loyalty programs.
+- When asked about anomalies, explain the issue and recommend corrective actions.
+- When asked about promotions, suggest specific types based on product performance.
+- Proactively suggest improvements when analyzing data.
+- Always use Philippine Peso (₱) for money amounts.
+- Be concise but helpful. Use bullet points for lists.
+- If data is missing, say so honestly.
+- Never make up data — only use what's provided in the context.
 
-DECLINE POLITELY FOR:
-- General knowledge questions
-- Politics, news, entertainment
-- Technical/coding questions
-- Anything unrelated to running the store
+EXAMPLE AGENTIC ACTIONS:
+- "Based on your sales data, I recommend running a Buy 1 Take 1 promotion on slow-moving items."
+- "You have 5 products with less than 10% profit margin. Consider renegotiating with suppliers."
+- "Customer Juan has ₱5,000 outstanding utang for 30 days. Send a payment reminder."
+- "Your electricity expense is 40% of revenue. Review energy usage to improve profitability."
 ''';
 
   static const _suggestions = [
@@ -114,19 +114,28 @@ DECLINE POLITELY FOR:
     String answer;
     try {
       final storeContext = await StoreDataService.instance.buildContext();
+      final memoryContext = await AiMemoryService.instance.getMemoryContext();
+      final fullContext = '$storeContext\n\n$memoryContext';
 
       if (_apiAvailable) {
         // Try MiMo API first
         answer = await MimoApiService.instance.chat(
           systemPrompt: _systemPrompt,
           userMessage: q,
-          context: storeContext,
+          context: fullContext,
         );
 
         // If network error, fall back to local
         if (answer == 'NETWORK_ERROR') {
           answer = await _localAnswer(q);
           answer += '\n\n_(Using local analysis — API unavailable)_';
+        } else {
+          // Store successful interaction in memory
+          await AiMemoryService.instance.storeChatMessage('user', q);
+          await AiMemoryService.instance.storeChatMessage('ai', answer);
+          await AiMemoryService.instance.analyzeAndStorePatterns(
+            await AiMemoryService.instance.getChatHistory(),
+          );
         }
       } else {
         // Try to reconnect to API
@@ -136,7 +145,7 @@ DECLINE POLITELY FOR:
           answer = await MimoApiService.instance.chat(
             systemPrompt: _systemPrompt,
             userMessage: q,
-            context: storeContext,
+            context: fullContext,
           );
           if (answer == 'NETWORK_ERROR') {
             answer = await _localAnswer(q);
